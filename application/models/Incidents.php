@@ -1,0 +1,109 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Incidents extends CI_Model {
+
+    public function getIncidents()
+	{
+        $query = $this->db->get('incidents');
+
+        return $query->result_array();
+	}
+    
+    public function getIncident($id) 
+    {
+        $query = $this->db->where('id', $id)->get('incidents');
+
+        return $query->row_array();
+    }
+
+    public function getIncidentByCol($id, $col) 
+    {
+        $query = $this->db->where('id', $id)->get('incidents');
+
+        return $query->row_array()[$col];
+    }
+
+    public function updateIncidentByCol($id, $col, $val) 
+    {
+        $this->db->set($col, $val, false);
+        $this->db->where('id', $id);
+        
+        return $this->db->update('incidents');
+    }
+
+    public function createIncident() {
+
+        $date = date("F j, Y");
+
+        $data = array(
+        'user_id' => $this->input->post('user_id'),
+        'patient_id' => $this->input->post('patient_id'),
+        'dose' => $this->input->post('amount'),
+        'height' => $this->input->post('height'),
+        'weight' => $this->input->post('weight'),
+        'animal_type' => $this->input->post('type'),
+        'bite_date' => $this->input->post('bite_date'),
+        'bite_site' => $this->input->post('bite_place'),
+        'status' => 0,
+        'updated_at' => time(),
+        'created_at' => $date
+        );
+
+        return $this->db->insert('incidents',$data);
+
+    }
+
+    public function checkSchedule($iid) {
+
+        $query = $this->db->where('incident_id', $iid)->where('status', 0)->get('schedules');
+
+        return $query->row_array();
+
+    }
+
+    public function countCompletedSchedule($iid) {
+
+        $query = $this->db->where('incident_id', $iid)->where('status', 1)->get('schedules');
+
+        return $query->num_rows();
+
+    }
+
+    public function createSchedule() {
+
+        $date = date("F j, Y");
+
+        $data = array(
+        'user_id' => $this->input->post('user_id'),
+        'incident_id' => $this->input->post('incident_id'),
+        'vial_id' => 0,
+        'schedule' => $this->input->post('sched_date'),
+        'status' => 0,
+        'updated_at' => time(),
+        'created_at' => $date
+        );
+
+        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
+            
+        $message = sprintf("sched: %s", $this->input->post('sched_date'));
+            
+        $data2 = [
+            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'message' => $message,
+            'phone_number' => '+'.$this->input->post('mobile')
+            ];
+            
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
+        $response = curl_exec($ch);
+        curl_close($ch);
+
+        return $this->db->insert('schedules',$data);
+
+    }
+
+}
