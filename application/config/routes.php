@@ -11,6 +11,9 @@ $route['forgot_password'] = 'MainController/forgot_password';
 $route['reset_password'] = 'MainController/reset_password';
 
 $route['dashboard'] = 'DashboardController/dashboard';
+$route['dashboard/send_reminders'] = 'DashboardController/send_reminders';
+$route['profile'] = 'ProfileController/index';
+$route['settings'] = 'ProfileController/index';
 
 $route['admin'] = 'AdminController/index';
 $route['admin/create'] = 'AdminController/create';

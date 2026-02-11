@@ -40,6 +40,10 @@ if (!function_exists('normalize_ph_mobile')) {
             return '+63' . $digits;
         }
 
+        if (strlen($digits) === 9) {
+            return '+639' . $digits;
+        }
+
         return '';
     }
 }

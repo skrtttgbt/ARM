@@ -57,6 +57,11 @@ class Patients extends CI_Model {
         $date = date("F j, Y");
         $mobile = normalize_ph_mobile($this->input->post('mobile'));
 
+        $relationship = $this->input->post('relationship');
+        if ($relationship === null) {
+            $relationship = '';
+        }
+
         $data = array(
         'user_id' => $this->input->post('user_id'),
         'status' => 0,
@@ -69,7 +74,7 @@ class Patients extends CI_Model {
         'address' => $this->input->post('address'),
         'mobile' => $mobile,
         'philhealth_type' => $this->input->post('type'),
-        'philhealth_relationship' => $this->input->post('relationship'),
+        'philhealth_relationship' => $relationship,
         'philhealth_no' => $this->input->post('account_number'),
         'philhealth_first_name' => $this->input->post('account_first_name'),
         'philhealth_last_name' => $this->input->post('account_last_name'),

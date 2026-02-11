@@ -1,0 +1,3 @@
+ALTER TABLE `incidents`
+  ADD COLUMN `reminder_d2_sent` TINYINT(1) NOT NULL DEFAULT 0,
+  ADD COLUMN `reminder_d3_sent` TINYINT(1) NOT NULL DEFAULT 0;

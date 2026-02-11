@@ -39,6 +39,12 @@ class Users extends CI_Model {
         return $this->db->update('users');
     }
 
+    public function updateUser($id, $data)
+    {
+        $this->db->where('id', $id);
+        return $this->db->update('users', $data);
+    }
+
     public function checkLogin() {
 
         $query = $this->db->where('email', $this->input->post('email'))
@@ -47,6 +53,23 @@ class Users extends CI_Model {
 
         return $query->row_array()['id'];
 
+    }
+
+    public function checkPassword($id, $password)
+    {
+        $query = $this->db->where('id', $id)
+            ->where('password', md5($password))
+            ->get('users');
+
+        return (bool)$query->row_array();
+    }
+
+    public function updatePassword($id, $password)
+    {
+        $this->db->set('password', md5($password));
+        $this->db->set('updated_at', time());
+        $this->db->where('id', $id);
+        return $this->db->update('users');
     }
 
     public function createUser() {

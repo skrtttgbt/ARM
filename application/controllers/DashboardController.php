@@ -64,6 +64,90 @@ class DashboardController extends CI_Controller {
         
         $this->load->view('main/dashboard', $data);
     }
+
+    public function send_reminders()
+    {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        if ($this->input->method() !== 'post') {
+            redirect('dashboard');
+            return;
+        }
+
+        $this->load->model('Incidents');
+        $this->load->model('Schedules');
+        $this->load->model('Patients');
+        $this->load->helper('phone');
+        $this->load->helper('semaphore');
+        $this->config->load('semaphore');
+
+        $api_key = $this->config->item('semaphore_api_key');
+        if (!$api_key) {
+            $this->session->set_flashdata('message', 'Semaphore API key is not configured.');
+            redirect('dashboard');
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $sent_d2 = 0;
+        $sent_d3 = 0;
+        $skipped = 0;
+
+        $this->db->select('i.id as incident_id, i.dose, i.reminder_d2_sent, i.reminder_d3_sent, p.mobile, p.patient_first_name, p.patient_last_name, MIN(s.schedule) as dose1_date');
+        $this->db->from('incidents i');
+        $this->db->join('schedules s', 's.incident_id = i.id AND s.status = 1', 'inner');
+        $this->db->join('patients p', 'p.id = i.patient_id', 'inner');
+        $this->db->group_by('i.id');
+        $rows = $this->db->get()->result_array();
+
+        foreach ($rows as $row) {
+            if (empty($row['dose1_date'])) {
+                $skipped++;
+                continue;
+            }
+
+            $dose1_date = date('Y-m-d', strtotime($row['dose1_date']));
+            $due_d2 = date('Y-m-d', strtotime($dose1_date . ' +3 days'));
+            $due_d3 = date('Y-m-d', strtotime($due_d2 . ' +7 days'));
+
+            $mobile = normalize_ph_mobile($row['mobile']);
+            if ($mobile === '') {
+                $skipped++;
+                continue;
+            }
+
+            $patient_name = trim($row['patient_first_name'] . ' ' . $row['patient_last_name']);
+
+            if ((int)$row['dose'] >= 2 && (int)$row['reminder_d2_sent'] === 0 && $today >= $due_d2) {
+                $message = "Reminder: Your 2nd dose is due. Please visit the clinic. Patient: " . $patient_name;
+                if (send_semaphore_sms($api_key, $mobile, $message)) {
+                    $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d2_sent', 1);
+                    $sent_d2++;
+                } else {
+                    $skipped++;
+                }
+            }
+
+            if ((int)$row['dose'] >= 3 && (int)$row['reminder_d3_sent'] === 0 && $today >= $due_d3) {
+                $message = "Reminder: Your 3rd dose is due. Please visit the clinic. Patient: " . $patient_name;
+                if (send_semaphore_sms($api_key, $mobile, $message)) {
+                    $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d3_sent', 1);
+                    $sent_d3++;
+                } else {
+                    $skipped++;
+                }
+            }
+        }
+
+        $this->session->set_flashdata(
+            'message',
+            "Reminders sent. Dose 2: {$sent_d2}, Dose 3: {$sent_d3}, Skipped: {$skipped}."
+        );
+        redirect('dashboard');
+    }
     
     private function getVialForecastData() {
         // Get total available vials

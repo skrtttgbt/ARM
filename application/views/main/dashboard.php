@@ -112,6 +112,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="nav-small-cap"><span class="hide-menu">PetVax Manager</span></li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
                                 <i data-feather="home" class="feather-icon"></i>
@@ -319,6 +320,11 @@
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="card-title">Dashboard Overview</h4>
+                                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                                    <div class="alert alert-info mt-3">
+                                        <?php echo $this->session->flashdata('message'); ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -476,6 +482,9 @@
                                     <a href="<?php echo base_url(); ?>vaccine/create" class="btn btn-success btn-sm m-1">Add New Vaccine</a>
                                     <a href="<?php echo base_url(); ?>vial/create" class="btn btn-info btn-sm m-1">Create Vial</a>
                                     <a href="<?php echo base_url(); ?>incident" class="btn btn-warning btn-sm m-1">View Incidents</a>
+                                    <?php echo form_open(base_url('dashboard/send_reminders'), 'class="d-inline"'); ?>
+                                        <button type="submit" class="btn btn-secondary btn-sm m-1">Send Reminders</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -594,3 +603,4 @@
 </body>
 
 </html>
+

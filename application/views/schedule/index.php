@@ -114,6 +114,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="nav-small-cap"><span class="hide-menu">PetVax Manager</span></li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
                                 <i data-feather="home" class="feather-icon"></i>
@@ -333,11 +334,16 @@
                     </div>
                 <?php endif; ?>
 
-                <div class="btn-group mb-3" role="group" aria-label="Schedule Navigation">
-                                    <a href="<?php echo base_url(); ?>schedule" class="btn btn-primary active">Today's Schedule</a>
-                                    <a href="<?php echo base_url(); ?>schedule/future" class="btn btn-outline-primary">Upcoming Schedule</a>
-                                </div>
-                                <h4 class="card-title">Schedules</h4>
+                <div class="d-flex flex-wrap align-items-center mb-3">
+                    <div class="btn-group me-2 mb-2" role="group" aria-label="Schedule Navigation">
+                        <a href="<?php echo base_url(); ?>schedule" class="btn btn-primary active">Today's Schedule</a>
+                        <a href="<?php echo base_url(); ?>schedule/future" class="btn btn-outline-primary">Upcoming Schedule</a>
+                    </div>
+                    <?php echo form_open(base_url('dashboard/send_reminders'), 'class="d-inline mb-2"'); ?>
+                        <button type="submit" class="btn btn-secondary btn-sm">Send Reminders</button>
+                    </form>
+                </div>
+                <h4 class="card-title">Schedules</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -465,3 +471,4 @@
 </body>
 
 </html>
+

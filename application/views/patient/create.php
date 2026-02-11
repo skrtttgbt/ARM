@@ -112,6 +112,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="nav-small-cap"><span class="hide-menu">PetVax Manager</span></li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
                                 <i data-feather="home" class="feather-icon"></i>
@@ -373,7 +374,10 @@
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Mobile Number</label>
-                                            <input name="mobile" type="text" inputmode="numeric" placeholder="+639XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <div class="input-group">
+                                                <span class="input-group-text">+639</span>
+                                                <input name="mobile" type="text" inputmode="numeric" maxlength="9" placeholder="XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            </div>
                                             <?php echo form_error('mobile', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -520,3 +524,4 @@
 </body>
 
 </html>
+

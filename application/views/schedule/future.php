@@ -114,6 +114,7 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="nav-small-cap"><span class="hide-menu">PetVax Manager</span></li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
                                 <i data-feather="home" class="feather-icon"></i>
@@ -452,3 +453,4 @@
 </body>
 
 </html>
+
