@@ -1,5 +1,7 @@
-
-
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -10,8 +12,6 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -42,9 +42,9 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <!-- <a href="index.html">
-                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
-                        </a> -->
+                        <a href="<?php echo base_url(); ?>dashboard">
+                            <!-- <img src="<?php echo base_url(); ?>assets/dist/img/lock-icon.png" alt="" class="img-fluid"> -->
+                        </a>
                     </div>
                     <!-- ============================================================== -->
                     <!-- End Logo -->
@@ -116,6 +116,12 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -284,12 +290,12 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Administrator - Archive</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Administrators</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
                                     <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Account List</li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Administrators</li>
                                 </ol>
                             </nav>
                         </div>
@@ -312,11 +318,13 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                if($CI->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('message'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 

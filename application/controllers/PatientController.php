@@ -30,26 +30,38 @@ class PatientController extends CI_Controller {
     public function __construct() {
 
         parent::__construct();
-
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-        }
+        
+        // Load necessary models and libraries
+        $this->load->model('Users');
+        $this->load->model('Patients');
+        $this->load->model('Incidents');
+        $this->load->library('session');
+        $this->load->helper('url');
+        $this->load->library('form_validation');
 
     }
 
     public function index() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
         $data['user_info'] = $this->users->getUser($session_id);
         $data['patients'] = $this->patients->getPatients();
 
-
         $this->load->view('patient/index', $data);
-
     }
 
     public function create() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -59,8 +71,10 @@ class PatientController extends CI_Controller {
         $this->form_validation->set_rules('last_name', 'Last Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('gender', 'Gender', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('birthday', 'Birthday', 'trim|required|callback_valid_birthday');
-        $this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|min_length[11]|is_unique[patients.mobile]');
-        $this->form_validation->set_rules('relationship', 'Relationship', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('height', 'Height', 'trim|required|numeric');
+        $this->form_validation->set_rules('weight', 'Weight', 'trim|required|numeric');
+        $this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|callback_valid_ph_mobile|callback_unique_patient_mobile');
+        $this->form_validation->set_rules('relationship', 'Relationship', 'trim|required');
         $this->form_validation->set_rules('account_number', 'Account Number', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('account_first_name', 'Member First Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('account_last_name', 'Member Last Name', 'trim|required|min_length[2]');
@@ -96,6 +110,12 @@ class PatientController extends CI_Controller {
     }
 
     public function archive() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
         $session_id = $this->session->userdata('user_id');
 
         $data['user_info'] = $this->users->getUser($session_id);
@@ -105,10 +125,56 @@ class PatientController extends CI_Controller {
     }
 
     public function view($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
         
+        $session_id = $this->session->userdata('user_id');
+
+        $data['user_info'] = $this->users->getUser($session_id);
+        $data['patient'] = $this->patients->getPatient($id);
+
+        // If patient doesn't exist, redirect to patient list
+        if (!$data['patient']) {
+            $this->session->set_flashdata('error', 'Patient not found.');
+            redirect('patient');
+            return;
+        }
+
+        $this->load->view('patient/profile', $data);
+    }
+
+    public function history($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        $session_id = $this->session->userdata('user_id');
+
+        $data['user_info'] = $this->users->getUser($session_id);
+        $data['patient'] = $this->patients->getPatient($id);
+        $data['incidents'] = $this->incidents->getIncidentsByPatientId($id);
+
+        // If patient doesn't exist, redirect to patient list
+        if (!$data['patient']) {
+            $this->session->set_flashdata('error', 'Patient not found.');
+            redirect('patient');
+            return;
+        }
+
+        $this->load->view('patient/history', $data);
     }
 
     public function account_suspend($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $this->patients->actionSuspend($id);
         $this->session->set_flashdata('message', 'Patient has been suspended.');
@@ -117,11 +183,38 @@ class PatientController extends CI_Controller {
     }
 
     public function account_activate($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $this->patients->actionActivate($id);
         $this->session->set_flashdata('message', 'Patient has been reactivated.');
 		redirect('patient/archive');
 
+    }
+
+    public function valid_ph_mobile($mobile) {
+        if (!is_valid_ph_mobile($mobile)) {
+            $this->form_validation->set_message('valid_ph_mobile', 'The {field} must be a valid PH mobile number (e.g., +639XXXXXXXXX).');
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    public function unique_patient_mobile($mobile) {
+        $normalized = normalize_ph_mobile($mobile);
+        if ($normalized === '') {
+            return TRUE;
+        }
+
+        $exists = $this->db->where('mobile', $normalized)->count_all_results('patients') > 0;
+        if ($exists) {
+            $this->form_validation->set_message('unique_patient_mobile', 'The {field} must be unique.');
+            return FALSE;
+        }
+        return TRUE;
     }
 
 }

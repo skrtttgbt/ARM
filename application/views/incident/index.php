@@ -115,6 +115,13 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -127,7 +134,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -310,15 +317,18 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Incidents</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
+                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-primary active">Incident List</a>
+                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Select Patient to Create Incident</a>
+                                </div>
+                                <h4 class="card-title">Incidents</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -379,7 +389,7 @@
                                                     <?php 
                                                     } else {
                                                     ?>
-                                                        <a href="<?php echo base_url() . "incident/create/schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
+                                                        <a href="<?php echo base_url() . "incident/create_schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
                                                     <?php  
                                                     }
 

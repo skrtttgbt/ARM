@@ -30,14 +30,22 @@ class AdminController extends CI_Controller {
     public function __construct() {
 
         parent::__construct();
-
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-        }
+        
+        // Load necessary models and libraries
+        $this->load->model('Users');
+        $this->load->library('session');
+        $this->load->helper('url');
+        $this->load->library('form_validation');
 
     }
 
     public function index() {
+
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -49,6 +57,11 @@ class AdminController extends CI_Controller {
 
     public function create() 
     {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -57,7 +70,7 @@ class AdminController extends CI_Controller {
         $this->form_validation->set_rules('first_name', 'First Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('last_name', 'Last Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('email', 'Email Address', 'trim|required|min_length[2]|is_unique[users.email]');
-        $this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|min_length[11]|is_unique[users.mobile]');
+        $this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|callback_valid_ph_mobile|callback_unique_user_mobile');
 
         if ($this->form_validation->run() == FALSE)
 		{
@@ -72,6 +85,11 @@ class AdminController extends CI_Controller {
     }
 
     public function account_reset($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $this->users->actionReset($id);
         $this->session->set_flashdata('message', 'Admin password has been reset. The new password will be sent to the admin’s mobile number.');
@@ -80,6 +98,11 @@ class AdminController extends CI_Controller {
     }
 
     public function account_suspend($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $this->users->actionSuspend($id);
         $this->session->set_flashdata('message', 'Admin account has been suspended. A notification has been sent to the admin’s mobile number.');
@@ -88,6 +111,11 @@ class AdminController extends CI_Controller {
     }
 
     public function account_activate($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $this->users->actionActivate($id);
         $this->session->set_flashdata('message', 'Admin account has been reactivated. A notification has been sent to the admin’s mobile number.');
@@ -96,6 +124,11 @@ class AdminController extends CI_Controller {
     }
 
     public function archive() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -103,6 +136,28 @@ class AdminController extends CI_Controller {
         $data['admins'] = $this->users->getArchives();
 
         $this->load->view('admin/archive', $data);
+    }
+
+    public function valid_ph_mobile($mobile) {
+        if (!is_valid_ph_mobile($mobile)) {
+            $this->form_validation->set_message('valid_ph_mobile', 'The {field} must be a valid PH mobile number (e.g., +639XXXXXXXXX).');
+            return FALSE;
+        }
+        return TRUE;
+    }
+
+    public function unique_user_mobile($mobile) {
+        $normalized = normalize_ph_mobile($mobile);
+        if ($normalized === '') {
+            return TRUE;
+        }
+
+        $exists = $this->db->where('mobile', $normalized)->count_all_results('users') > 0;
+        if ($exists) {
+            $this->form_validation->set_message('unique_user_mobile', 'The {field} must be unique.');
+            return FALSE;
+        }
+        return TRUE;
     }
 
 }

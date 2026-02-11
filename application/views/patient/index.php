@@ -1,3 +1,9 @@
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+$CI->load->library('session');
+
+?>
 
 
 <!DOCTYPE html>
@@ -135,7 +141,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -318,8 +324,7 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('message'); ?>
@@ -340,6 +345,8 @@
                                                 <th>Full Name</th>
                                                 <th>Gender</th>
                                                 <th>Age</th>
+                                                <th>Height</th>
+                                                <th>Weight</th>
                                                 <th>PhilHealth</th>
                                                 <th>Date Registed</th>
                                                 <th>Action</th>
@@ -354,6 +361,8 @@
                                                     <td><?php echo ucwords($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></td>
                                                     <td><?php echo ucwords($patient['gender']); ?></td>
                                                     <td><?php echo (new DateTime($patient['birthday']))->diff(new DateTime())->y; ?> Yrs Old</td>
+                                                    <td><?php echo !empty($patient['height']) ? $patient['height'] . ' cm' : 'N/A'; ?></td>
+                                                    <td><?php echo !empty($patient['weight']) ? $patient['weight'] . ' kg' : 'N/A'; ?></td>
                                                     <td>
                                                         <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
                                                              data-bs-toggle="modal" data-bs-target="#philhealth-<?php echo $patient['id']; ?>">
@@ -362,12 +371,14 @@
                                                     </td>
                                                     <td><?php echo $patient['created_at']; ?></td>
                                                     <td>
-                                                        <div class="btn-group">
+                                                        <a href="<?php echo base_url() . "patient/profile/" . $patient['id']; ?>" class="btn btn-primary btn-sm mr-1">Profile</a>
+                                                        <a href="<?php echo base_url() . "patient/history/" . $patient['id']; ?>" class="btn btn-info btn-sm mr-1">History</a>
+                                                        <div class="btn-group dropup">
                                                             <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
                                                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                                 <i class="icon-settings"></i>
                                                             </button>
-                                                            <div class="dropdown-menu">
+                                                            <div class="dropdown-menu dropdown-menu-right" style="max-height: 200px; overflow-y: auto;">
                                                                 <a class="dropdown-item" href="<?php echo base_url() . "incident/create/" . $patient['id']; ?>">Create Incident</a>
                                                                 <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#suspend-modal-<?php echo $patient['id']; ?>">Suspend Account</a>
                                                             </div>
@@ -407,11 +418,15 @@
                                                             </div>
                                                             <div class="modal-body">
                                                                 <small>Account Type</small>
-                                                                <p><?php echo $patient['philhealth_type'] . ($patient['philhealth_type'] == "Member" ? "" : " - " . $patient['philhealth_relationship']); ?></p>
+                                                                <p><?php echo htmlspecialchars($patient['philhealth_type']); ?></p>
+                                                                <?php if($patient['philhealth_type'] != 'Member'): ?>
+                                                                <small>Relationship</small>
+                                                                <p><?php echo htmlspecialchars($patient['philhealth_relationship']); ?></p>
+                                                                <?php endif; ?>
                                                                 <small>Account Number</small>
-                                                                <p><?php echo $patient['philhealth_no']; ?></p>
-                                                                <small>Full Name</small>
-                                                                <p><?php echo ucwords($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></p>
+                                                                <p><?php echo htmlspecialchars($patient['philhealth_no']); ?></p>
+                                                                <small>Member Name</small>
+                                                                <p><?php echo htmlspecialchars(ucwords($patient['philhealth_first_name'] . " " . $patient['philhealth_last_name'])); ?></p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-light"

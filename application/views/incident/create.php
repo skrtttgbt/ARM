@@ -39,7 +39,7 @@
                     <div class="navbar-brand">
                         <!-- Logo icon -->
                         <a href="index.html">
-                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
+                            <img src="<?php echo base_url(); ?>assets/images/freedashDark.svg" alt="" class="img-fluid">
                         </a>
                     </div>
                     <!-- ============================================================== -->
@@ -113,6 +113,12 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -125,7 +131,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -142,7 +148,7 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>incident/create/<?php echo $patient['id']; ?>" class="sidebar-link">
+                                    <a href="<?php echo base_url(); ?>incident/create/<?php echo isset($patient['id']) ? $patient['id'] : ''; ?>" class="sidebar-link">
                                         <span class="hide-menu"> Create</span>
                                     </a>
                                 </li>
@@ -285,12 +291,13 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Dashboard</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Create Incident</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Dashboard</li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>incident" class="text-muted">Incident</a></li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Create</li>
                                 </ol>
                             </nav>
                         </div>
@@ -314,19 +321,65 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
 
-                <?php if($this->session->flashdata('barcode_error')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('barcode_error')): ?>
                     <div class="alert alert-danger" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('barcode_error'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Create Incident</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
+                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-outline-primary">Incident List</a>
+                                    <a href="<?php echo base_url(); ?>incident/create/<?php echo $patient['id']; ?>" class="btn btn-primary active">Create Incident</a>
+                                </div>
+                                <h4 class="card-title">Create Incident</h4>
+
+                <!-- Previous Incidents Section -->
+                <?php if (!empty($previous_incidents)): ?>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0">Previous Incidents for <?php echo htmlspecialchars($patient['patient_first_name'] . ' ' . $patient['patient_last_name']); ?></h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Animal Type</th>
+                                                <th>Bite Site</th>
+                                                <th>Dose</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($previous_incidents as $incident): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($incident['bite_date']); ?></td>
+                                                <td><?php echo htmlspecialchars($incident['animal_type']); ?></td>
+                                                <td><?php echo htmlspecialchars($incident['bite_site']); ?></td>
+                                                <td><?php echo htmlspecialchars($incident['dose']); ?></td>
+                                                <td>
+                                                    <a href="<?php echo base_url('incident/create_schedule/' . $incident['id']); ?>" class="btn btn-sm btn-primary">View Schedule</a>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
                             <div class="card-body">
-                                <?php echo form_open(base_url() . 'incident/create/' . $patient['id'], 'form-horizontal'); ?>
+                                <?php echo form_open(base_url('incident/create/' . $patient['id']), 'class="form-horizontal"'); ?>
                                     
                                     <input type="hidden" name="user_id" value="<?php echo $user_info['id']; ?>">
                                     <input type="hidden" name="patient_id" value="<?php echo $patient['id']; ?>">
@@ -370,23 +423,6 @@
                                             <?php echo form_error('bite_place', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
-
-
-                                    <div class="row">
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Height</label>
-                                            <input name="height" type="text" class="form-control <?php echo (form_error('height') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" >
-                                            <?php echo form_error('height', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-
-                                        
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Weight</label>
-                                            <input name="weight" type="text" class="form-control <?php echo (form_error('weight') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" >
-                                            <?php echo form_error('weight', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-
                                     <div class="row">
                                         <div class="form-group mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Dose Amount</label>

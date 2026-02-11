@@ -40,8 +40,8 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <a href="index.html">
-                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
+                        <a href="<?php echo base_url(); ?>dashboard">
+                            <!-- <img src="<?php echo base_url(); ?>assets/dist/img/lock-icon.png" alt="" class="img-fluid"> -->
                         </a>
                     </div>
                     <!-- ============================================================== -->
@@ -113,6 +113,7 @@
             <div class="scroll-sidebar" data-sidebarbg="skin6">
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
+                    <ul id="sidebarnav">
                         <li class="sidebar-item"> 
                             <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
                                 <i data-feather="home" class="feather-icon"></i>
@@ -132,7 +133,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -315,15 +316,27 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                $CI->load->library('session');
+                if($CI->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('message'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
+                    </div>
+                <?php elseif($CI->session->flashdata('error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $CI->session->flashdata('error'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Schedules</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Schedule Navigation">
+                                    <a href="<?php echo base_url(); ?>schedule" class="btn btn-outline-primary">Today's Schedule</a>
+                                    <a href="<?php echo base_url(); ?>schedule/future" class="btn btn-primary active">Upcoming Schedule</a>
+                                </div>
+                                <h4 class="card-title">Schedules</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -342,16 +355,29 @@
                                         </thead>
                                         <tbody>
                                         <?php 
-                                        if($schedules) {
+                                        if($schedules && !empty($schedules)) {
                                             foreach($schedules as $schedule) {
                                             $checkDate = date("Y-m-d", strtotime($schedule['schedule'])); // convert to 2025-11-11
 
                                             $today = date("Y-m-d");
 
                                             if ($today <= $checkDate) {
+                                            // Check if incident exists
                                             $incident = $this->incidents->getIncident($schedule['incident_id']);
+                                            if (!$incident) {
+                                                continue; // Skip this schedule if incident doesn't exist
+                                            }
+                                            
+                                            // Check if patient exists
                                             $patient = $this->patients->getPatient($incident['patient_id']);
+                                            if (!$patient) {
+                                                continue; // Skip this schedule if patient doesn't exist
+                                            }
+                                            
                                             $attendee = $this->users->getUser($schedule['user_id']);
+                                            if (!$attendee) {
+                                                continue; // Skip this schedule if user doesn't exist
+                                            }
                                             ?>
                                             <tr>
                                                 <td><?php echo $patient['patient_first_name'] . " " . $patient['patient_last_name']; ?></td>
@@ -363,6 +389,8 @@
                                             <?php
                                             }
                                             }
+                                        } else {
+                                            echo "<tr><td colspan='4' class='text-center'>No future schedule data yet</td></tr>";
                                         }
                                         ?>
                                         </tbody>

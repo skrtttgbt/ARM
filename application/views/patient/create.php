@@ -113,6 +113,12 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -335,8 +341,10 @@
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Gender</label>
                                             <select name="gender" class="form-select" >
-                                                <option value="male">MALE</option>
-                                                <option value="female">FEMALE</option>
+                                                <option value="" disabled selected>Select Gender</option>
+                                                <option value="male"><i class="fas fa-mars"></i> MALE</option>
+                                                <option value="female"><i class="fas fa-venus"></i> FEMALE</option>
+                                                <option value="other"><i class="fas fa-genderless"></i> PREFER NOT TO SAY</option>
                                             </select>
                                             <?php echo form_error('gender', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
@@ -349,9 +357,23 @@
                                     </div>
 
                                     <div class="row">
+                                        <div class="form-group col-md-6">
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Height (cm)</label>
+                                            <input name="height" type="text" class="form-control <?php echo (form_error('height') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter height in cm">
+                                            <?php echo form_error('height', '<div class="invalid-feedback">', '</div>'); ?>  
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Weight (kg)</label>
+                                            <input name="weight" type="text" class="form-control <?php echo (form_error('weight') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter weight in kg">
+                                            <?php echo form_error('weight', '<div class="invalid-feedback">', '</div>'); ?>  
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
                                         <div class="form-group col-md-12 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Mobile Number</label>
-                                            <input name="mobile" type="number" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="mobile" type="text" inputmode="numeric" placeholder="+639XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
                                             <?php echo form_error('mobile', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -379,24 +401,31 @@
 
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Relationship</label>
-                                            <input name="relationship" type="text" class="form-control <?php echo (form_error('relationship') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <select name="relationship" class="form-select <?php echo (form_error('relationship') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                                <option value="">Select Relationship</option>
+                                                <option value="Spouse">Spouse</option>
+                                                <option value="Child">Child</option>
+                                                <option value="Parent">Parent</option>
+                                                <option value="Grandparent">Grandparent</option>
+                                                <option value="Grandchild">Grandchild</option>
+                                                <option value="Sibling">Sibling</option>
+                                                <option value="In-Law">In-Law</option>
+                                                <option value="Other">Other</option>
+                                            </select>
                                             <?php echo form_error('relationship', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
                                     <script>
                                         document.addEventListener("DOMContentLoaded", function () {
                                         const typeSelect = document.querySelector('select[name="type"]');
-                                        const relationshipInput = document.querySelector('input[name="relationship"]');
+                                        const relationshipSelect = document.querySelector('select[name="relationship"]');
 
                                         function toggleRelationship() {
                                             if (typeSelect.value === "Member") {
-                                            relationshipInput.value = "N/A";
-                                            relationshipInput.readOnly = true;
+                                                relationshipSelect.value = "";
+                                                relationshipSelect.disabled = true;
                                             } else {
-                                            relationshipInput.disabled = false;
-                                            if (relationshipInput.value === "N/A") {
-                                                relationshipInput.value = "";
-                                            }
+                                                relationshipSelect.disabled = false;
                                             }
                                         }
 

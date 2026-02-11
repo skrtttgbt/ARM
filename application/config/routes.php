@@ -7,6 +7,8 @@ $route['translate_uri_dashes'] = FALSE;
 
 $route['login'] = 'MainController/login';
 $route['logout'] = 'MainController/logout';
+$route['forgot_password'] = 'MainController/forgot_password';
+$route['reset_password'] = 'MainController/reset_password';
 
 $route['dashboard'] = 'DashboardController/dashboard';
 
@@ -21,6 +23,8 @@ $route['admin/action/activate/(:any)'] = 'AdminController/account_activate/$1';
 $route['patient'] = 'PatientController/index';
 $route['patient/create'] = 'PatientController/create';
 $route['patient/archive'] = 'PatientController/archive';
+$route['patient/history/(:any)'] = 'PatientController/history/$1';
+$route['patient/profile/(:any)'] = 'PatientController/view/$1';
 $route['patient/action/suspend/(:any)'] = 'PatientController/account_suspend/$1';
 $route['patient/action/activate/(:any)'] = 'PatientController/account_activate/$1';
 
@@ -42,13 +46,16 @@ $route['vial/barcode/(:any)/download'] = 'VialController/barcodeDownload/$1';
 
 
 $route['incident'] = 'IncidentController/index';
+$route['incident/create'] = 'IncidentController/create';
 $route['incident/create/(:any)'] = 'IncidentController/create/$1';
-$route['incident/create/schedule/(:any)'] = 'IncidentController/create_schedule/$1';
+$route['incident/create_schedule/(:any)'] = 'IncidentController/create_schedule/$1';
 
 
 $route['schedule'] = 'ScheduleController/index';
 $route['schedule/future'] = 'ScheduleController/future';
 $route['schedule/proceed/(:any)'] = 'ScheduleController/proceed/$1';
+
+$route['log/transaction'] = 'TransactionsController/index';
 
 $route['test'] = 'TestController';
 $route['test/db'] = 'TestController/test_db';

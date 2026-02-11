@@ -113,6 +113,12 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -125,7 +131,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -142,7 +148,7 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>incident/create/schedule/<?php echo $incident['id']; ?>" class="sidebar-link">
+                                    <a href="<?php echo base_url(); ?>incident/create_schedule/<?php echo $incident['id']; ?>" class="sidebar-link">
                                         <span class="hide-menu"> Schedule</span>
                                     </a>
                                 </li>
@@ -314,19 +320,37 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
 
-                <?php if($this->session->flashdata('barcode_error')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('barcode_error')): ?>
                     <div class="alert alert-danger" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('barcode_error'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Create Schedule</h4>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $this->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if(isset($this->session) && $this->session->flashdata('error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-warning me-2"></i> 
+                        <?php echo $this->session->flashdata('error'); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
+                    <a href="<?php echo base_url(); ?>incident" class="btn btn-outline-primary">List</a>
+                    <a href="<?php echo base_url(); ?>incident/create_schedule/<?php echo $incident['id']; ?>" class="btn btn-primary active">Schedule</a>
+                </div>
+                                <h4 class="card-title">Create Schedule</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
                             <div class="card-body">
-                                <?php echo form_open(base_url() . 'incident/create/schedule/' . $incident['id'], 'form-horizontal'); ?>
+                                <?php echo form_open(base_url() . 'incident/create_schedule/' . $incident['id'], 'form-horizontal'); ?>
 
                                     <input type="hidden" value="<?php echo $user_info['id']; ?>" name="user_id">
                                     <input type="hidden" value="<?php echo $incident['id']; ?>" name="incident_id">
@@ -372,14 +396,14 @@
                                     <div class="row">
                                         <div class="form-group col-md-6 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Height</label>
-                                            <input value="<?php echo $incident['height']; ?>" name="height" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
+                                            <input value="<?php echo isset($patient['height']) ? $patient['height'] : ''; ?>" name="height" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
                                             <?php echo form_error('height', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
                                         
                                         <div class="form-group col-md-6 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Weight</label>
-                                            <input value="<?php echo $incident['weight']; ?>" name="weight" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
+                                            <input value="<?php echo isset($patient['weight']) ? $patient['weight'] : ''; ?>" name="weight" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
                                             <?php echo form_error('weight', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>

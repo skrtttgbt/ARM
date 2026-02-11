@@ -113,6 +113,13 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -309,10 +316,14 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
 
-                <?php if($this->session->flashdata('barcode_error')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                $CI->load->library('session');
+                if($CI->session->flashdata('barcode_error')): ?>
                     <div class="alert alert-danger" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('barcode_error'); ?>
+                        <?php echo $CI->session->flashdata('barcode_error'); ?>
                     </div>
                 <?php endif; ?>
 
@@ -326,13 +337,13 @@
                                     <div class="row">
                                         <div class="form-group col-md-12">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Barcode (Scan the barcode)</label>
-                                            <input name="barcode" type="text" value="<?php echo ($this->session->userdata('vaccine_barcode') ? $this->session->userdata('vaccine_barcode') : "")?>" class="form-control" <?php echo ($this->session->userdata('vaccine_barcode') ? "readonly" : "")?>>
+                                            <input name="barcode" type="text" value="<?php echo ($CI->session->userdata('vaccine_barcode') ? $CI->session->userdata('vaccine_barcode') : "")?>" class="form-control" <?php echo ($CI->session->userdata('vaccine_barcode') ? "readonly" : "")?>>
                                             <?php echo form_error('barcode', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
                                     
                                     <?php 
-                                    if ($this->session->userdata('vaccine_barcode')) {
+                                    if ($CI->session->userdata('vaccine_barcode')) {
                                     ?>
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-3">
@@ -354,9 +365,9 @@
 
 
                                     <?php 
-                                    if ($this->session->userdata('vaccine_barcode')) {
+                                    if ($CI->session->userdata('vaccine_barcode')) {
 
-                                        $vaccine = $this->vaccines->getVaccineByBarcode($this->session->userdata('vaccine_barcode'))
+                                        $vaccine = $this->vaccines->getVaccineByBarcode($CI->session->userdata('vaccine_barcode'))
 
                                     ?>
                                     <hr>

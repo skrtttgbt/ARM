@@ -24,6 +24,16 @@ class Patients extends CI_Model {
         return $query->row_array()[$col];
     }
 
+    public function getHeight($id) 
+    {
+        return $this->getPatientByCol($id, 'height');
+    }
+
+    public function getWeight($id) 
+    {
+        return $this->getPatientByCol($id, 'weight');
+    }
+
     public function updatePatientByCol($id, $col, $val) 
     {
         $this->db->set($col, $val, false);
@@ -32,9 +42,20 @@ class Patients extends CI_Model {
         return $this->db->update('patients');
     }
 
+    public function updateHeight($id, $height) 
+    {
+        return $this->updatePatientByCol($id, 'height', $height);
+    }
+
+    public function updateWeight($id, $weight) 
+    {
+        return $this->updatePatientByCol($id, 'weight', $weight);
+    }
+
     public function createPatient() {
 
         $date = date("F j, Y");
+        $mobile = normalize_ph_mobile($this->input->post('mobile'));
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
@@ -43,8 +64,10 @@ class Patients extends CI_Model {
         'patient_last_name' => $this->input->post('last_name'),
         'gender' => $this->input->post('gender'),
         'birthday' => $this->input->post('birthday'),
+        'height' => $this->input->post('height'),
+        'weight' => $this->input->post('weight'),
         'address' => $this->input->post('address'),
-        'mobile' => $this->input->post('mobile'),
+        'mobile' => $mobile,
         'philhealth_type' => $this->input->post('type'),
         'philhealth_relationship' => $this->input->post('relationship'),
         'philhealth_no' => $this->input->post('account_number'),
@@ -62,7 +85,7 @@ class Patients extends CI_Model {
         $data2 = [
             'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
             'message' => $message,
-            'phone_number' => $this->input->post('mobile')
+            'phone_number' => $mobile
             ];
             
         $ch = curl_init($url);
@@ -97,5 +120,11 @@ class Patients extends CI_Model {
         $query = $this->db->where('deleted', 1)->get('patients');
 
         return $query->result_array();
+    }
+    
+    public function getTotalPatients() {
+        $query = $this->db->where('deleted', 0)->get('patients');
+        
+        return $query->num_rows();
     }
 }

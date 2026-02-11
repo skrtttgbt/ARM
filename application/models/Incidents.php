@@ -16,6 +16,13 @@ class Incidents extends CI_Model {
 
         return $query->row_array();
     }
+    
+    public function getIncidentsByPatientId($patient_id) 
+    {
+        $query = $this->db->where('patient_id', $patient_id)->get('incidents');
+
+        return $query->result_array();
+    }
 
     public function getIncidentByCol($id, $col) 
     {
@@ -40,8 +47,6 @@ class Incidents extends CI_Model {
         'user_id' => $this->input->post('user_id'),
         'patient_id' => $this->input->post('patient_id'),
         'dose' => $this->input->post('amount'),
-        'height' => $this->input->post('height'),
-        'weight' => $this->input->post('weight'),
         'animal_type' => $this->input->post('type'),
         'bite_date' => $this->input->post('bite_date'),
         'bite_site' => $this->input->post('bite_place'),
@@ -105,5 +110,10 @@ class Incidents extends CI_Model {
         return $this->db->insert('schedules',$data);
 
     }
-
+    
+    public function getTotalIncidents() {
+        $query = $this->db->get('incidents');
+        
+        return $query->num_rows();
+    }
 }

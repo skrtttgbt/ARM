@@ -37,9 +37,13 @@
                   <div class="form-group">
                     <input type="password" name="password" class="form-control form-control-lg" id="exampleInputPassword1" placeholder="Password">
                   </div>
+                  <div class="my-2 d-flex justify-content-between align-items-center">
+                    <a href="<?php echo base_url(); ?>forgot_password" class="auth-link text-black">Forgot password?</a>
+                  </div>
                   <div class="mt-3 d-grid gap-2">
                     <button name="loginBtn" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" type="submit">SIGN IN</button>
                   </div>
+                 
                 </form>
               </div>
             </div>

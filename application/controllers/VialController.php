@@ -33,14 +33,23 @@ class VialController extends CI_Controller {
     public function __construct() {
 
         parent::__construct();
-
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-        }
+        
+        // Load necessary models and libraries
+        $this->load->model('Users');
+        $this->load->model('Vials');
+        $this->load->model('Vaccines');
+        $this->load->library('session');
+        $this->load->helper('url');
+        $this->load->library('form_validation');
 
     }
 
     public function index() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -48,10 +57,14 @@ class VialController extends CI_Controller {
         $data['vials'] = $this->vials->getVials();
 
         $this->load->view('vial/index', $data);
-
     }
 
     public function create() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -83,7 +96,7 @@ class VialController extends CI_Controller {
                 redirect('vial/create');
             }
             
-            $this->load->view('vaccine/create', $data);
+            $this->load->view('vial/create', $data);
 
         } else {
 
@@ -102,12 +115,14 @@ class VialController extends CI_Controller {
             }
 
         }
-
-
-        
     }
 
     public function verify() {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
@@ -146,6 +161,11 @@ class VialController extends CI_Controller {
 
     public function barcode($id)
     {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
         
         $generator = new DNS1D();
         $generator->setStorPath(APPPATH . 'cache/'); // temporary storage for images
@@ -157,6 +177,11 @@ class VialController extends CI_Controller {
     }
 
     public function barcodeDownload($id) {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $generator = new DNS1D();
         $generator->setStorPath(APPPATH . 'cache/');
@@ -171,11 +196,8 @@ class VialController extends CI_Controller {
         header('Expires: 0');
         header('Cache-Control: must-revalidate');
         header('Pragma: public');
-        header('Content-Length: ' . strlen((1000000 + $id)));
-
         echo $barcode;
         exit;
-
     }
 
 }

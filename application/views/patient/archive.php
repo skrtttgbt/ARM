@@ -1,5 +1,8 @@
-
-
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+$CI->load->library('session');
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -116,6 +119,12 @@
                 <!-- Sidebar navigation-->
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
+                        <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -313,10 +322,14 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
 
-                <?php if($this->session->flashdata('message')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                $CI->load->library('session');
+                if($CI->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('message'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 

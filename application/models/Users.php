@@ -17,6 +17,13 @@ class Users extends CI_Model {
         return $query->row_array();
     }
 
+    public function getUserByEmail($email) 
+    {
+        $query = $this->db->where('email', $email)->get('users');
+
+        return $query->row_array();
+    }
+
     public function getUserByCol($id, $col) 
     {
         $query = $this->db->where('id', $id)->get('users');
@@ -45,6 +52,7 @@ class Users extends CI_Model {
     public function createUser() {
 
         $date = date("F j, Y");
+        $mobile = normalize_ph_mobile($this->input->post('mobile'));
 
         $data = array(
         'level' => 1,
@@ -53,7 +61,7 @@ class Users extends CI_Model {
         'first_name' => $this->input->post('first_name'),
         'last_name' => $this->input->post('last_name'),
         'email' => $this->input->post('email'),
-        'mobile' => $this->input->post('mobile'),
+        'mobile' => $mobile,
         'password' => md5($this->input->post('password')),
         'created_at' => $date,
         'updated_at' => time()
@@ -66,7 +74,7 @@ class Users extends CI_Model {
         $data2 = [
             'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
             'message' => $message,
-            'phone_number' => $this->input->post('mobile')
+            'phone_number' => $mobile
             ];
             
         $ch = curl_init($url);
@@ -95,9 +103,104 @@ class Users extends CI_Model {
         return $query->result_array();
     }
 
+    public function generateResetToken($user_id) {
+        // Generate a unique token for password reset
+        $token = bin2hex(random_bytes(50));
+        
+        // Store the reset token in the database
+        $data = array(
+            'reset_token' => $token,
+            'reset_token_expires' => time() + 3600 // Token expires in 1 hour
+        );
+        
+        $this->db->where('id', $user_id);
+        $this->db->update('users', $data);
+        
+        return $token;
+    }
+
+    public function validateResetToken($token) {
+        $current_time = time();
+        
+        // Check if token exists and hasn't expired
+        $query = $this->db->where('reset_token', $token)
+                          ->where('reset_token_expires >', $current_time)
+                          ->get('users');
+                          
+        return $query->row_array();
+    }
+
+    public function resetPasswordWithToken($token, $new_password) {
+        // Validate token first
+        $user = $this->validateResetToken($token);
+        
+        if ($user) {
+            // Update password and clear reset token
+            $data = array(
+                'password' => md5($new_password),
+                'reset_token' => NULL,
+                'reset_token_expires' => NULL
+            );
+            
+            $this->db->where('id', $user['id']);
+            $result = $this->db->update('users', $data);
+            
+            return $result ? $user : false;
+        }
+        
+        return false;
+    }
+
+    public function resetPassword($email) {
+        // Get user details
+        $user = $this->getUserByEmail($email);
+        
+        if ($user) {
+            // Generate reset token
+            $reset_token = $this->generateResetToken($user['id']);
+            
+            // Only send SMS if user has a mobile number
+            if (!empty($user['mobile'])) {
+                // Send SMS with reset token
+                $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
+                    
+                // Create a short reset link
+                $reset_link = base_url() . 'reset_password?token=' . $reset_token . '&email=' . urlencode($email);
+                
+                $message = sprintf("Click this link to reset your password: %s", $reset_link);
+                $phone = normalize_ph_mobile($user['mobile']);
+                if ($phone === '') {
+                    $phone = $user['mobile'];
+                }
+                    
+                $data2 = [
+                    'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+                    'message' => $message,
+                    'phone_number' => $phone
+                    ];
+                    
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
+                $response = curl_exec($ch);
+                curl_close($ch);
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+
     public function actionReset($id) {
 
         $user = $this->getUser($id);
+        $phone = normalize_ph_mobile($user['mobile']);
+        if ($phone === '') {
+            $phone = $user['mobile'];
+        }
 
         $rand = rand(11111111,99999999);
 
@@ -108,7 +211,7 @@ class Users extends CI_Model {
         $data2 = [
             'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
             'message' => $message,
-            'phone_number' => $user['mobile']
+            'phone_number' => $phone
             ];
             
         $ch = curl_init($url);
@@ -130,6 +233,10 @@ class Users extends CI_Model {
     public function actionSuspend($id) {
 
         $user = $this->getUser($id);
+        $phone = normalize_ph_mobile($user['mobile']);
+        if ($phone === '') {
+            $phone = $user['mobile'];
+        }
 
         $rand = rand(11111111,99999999);
 
@@ -140,7 +247,7 @@ class Users extends CI_Model {
         $data2 = [
             'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
             'message' => $message,
-            'phone_number' => $user['mobile']
+            'phone_number' => $phone
             ];
             
         $ch = curl_init($url);
@@ -160,6 +267,10 @@ class Users extends CI_Model {
     public function actionActivate($id) {
 
         $user = $this->getUser($id);
+        $phone = normalize_ph_mobile($user['mobile']);
+        if ($phone === '') {
+            $phone = $user['mobile'];
+        }
 
         $rand = rand(11111111,99999999);
 
@@ -170,7 +281,7 @@ class Users extends CI_Model {
         $data2 = [
             'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
             'message' => $message,
-            'phone_number' => $user['mobile']
+            'phone_number' => $phone
             ];
             
         $ch = curl_init($url);

@@ -17,34 +17,147 @@ class DashboardController extends CI_Controller {
     public $lang;
     public $session;
     public $users;
-    public $db;
+    public $incidents;
+    public $patients;
     public $form_validation;
+    public $db;
     public $email;
     public $zend;
-    public $patients;
     public $vaccines;
     public $vials;
-    public $incidents;
     public $schedules;
 
-    public function __construct() {
-
+    public function __construct()
+    {
         parent::__construct();
-
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-        }
-
+        $this->load->model('Users');
+        $this->load->helper('url');
+        $this->load->library('session');
     }
 
     public function dashboard() 
     {
+        // Check if user is logged in
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
 
         $session_id = $this->session->userdata('user_id');
 
+        // Load models
+        $this->load->model('Patients');
+        $this->load->model('Incidents');
+        $this->load->model('Schedules');
+        $this->load->model('Vaccines');
+        $this->load->model('Vials');
+
+        // Load the dashboard content
         $data['user_info'] = $this->users->getUser($session_id);
+        $data['total_patients'] = $this->patients->getTotalPatients();
+        $data['total_incidents'] = $this->incidents->getTotalIncidents();
+        $data['total_schedules_today'] = $this->schedules->getTodaySchedulesCount();
+        $data['total_vaccines'] = $this->vaccines->getTotalVaccines();
+        $data['total_vials'] = $this->vials->getTotalVials();
+                $data['forecast_data'] = $this->getVialForecastData();
+                        $data['chart_data'] = $this->getChartData();
+        
         $this->load->view('main/dashboard', $data);
-
     }
-
+    
+    private function getVialForecastData() {
+        // Get total available vials
+        $this->load->model('Vials');
+        $total_vials = $this->vials->getTotalVials();
+        
+        // Get total scheduled vaccinations (pending and completed)
+        $this->load->model('Schedules');
+        $this->db->where_in('status', [0, 1]); // 0=pending, 1=completed (excluding 2=cancelled)
+        $scheduled_count = $this->db->count_all_results('schedules');
+        
+        // Get completed schedules (already used vials)
+        $this->db->where('status', 1); // completed schedules
+        $completed_schedules = $this->db->count_all_results('schedules');
+        
+        // Calculate forecast data
+        $used_vials = $completed_schedules;
+        $available_vials = $total_vials - $used_vials;
+        $pending_schedules = $scheduled_count - $completed_schedules;
+        
+        // Calculate projected shortage/excess
+        $projected_shortage = max(0, $pending_schedules - $available_vials);
+        $projected_excess = max(0, $available_vials - $pending_schedules);
+        
+        // Calculate percentage for visualization
+        $usage_percentage = $total_vials > 0 ? round(($used_vials / $total_vials) * 100, 2) : 0;
+        $availability_percentage = $total_vials > 0 ? round(($available_vials / $total_vials) * 100, 2) : 0;
+        
+        // Determine stock status
+        $stock_status = 'adequate';
+        if ($available_vials <= 10) {
+            $stock_status = 'critical'; // Critical if 10 or fewer vials remain
+        } elseif ($available_vials <= 30) {
+            $stock_status = 'low'; // Low if 30 or fewer vials remain
+        }
+        
+        return [
+            'total_vials' => $total_vials,
+            'used_vials' => $used_vials,
+            'available_vials' => $available_vials,
+            'pending_schedules' => $pending_schedules,
+            'projected_shortage' => $projected_shortage,
+            'projected_excess' => $projected_excess,
+            'usage_percentage' => $usage_percentage,
+            'availability_percentage' => $availability_percentage,
+            'stock_status' => $stock_status
+        ];
+    }
+    
+    private function getChartData() {
+        // Get monthly incident counts for the last 6 months
+        $months = [];
+        $incident_counts = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = date('Y-m', strtotime("-$i months"));
+            $year = substr($date, 0, 4);
+            $month = substr($date, 5, 2);
+            
+            // Count incidents for this month
+            $this->db->select('COUNT(*) as count');
+            $this->db->from('incidents');
+            $this->db->where('YEAR(created_at)', $year);
+            $this->db->where('MONTH(created_at)', $month);
+            $result = $this->db->get()->row();
+            
+            $months[] = date('M Y', strtotime($date));
+            $incident_counts[] = $result ? (int)$result->count : 0;
+        }
+        
+        // Get monthly vaccination counts for the last 6 months
+        $vaccination_counts = [];
+        
+        for ($i = 5; $i >= 0; $i--) {
+            $date = date('Y-m', strtotime("-$i months"));
+            $year = substr($date, 0, 4);
+            $month = substr($date, 5, 2);
+            
+            // Count completed schedules for this month
+            $this->db->select('COUNT(*) as count');
+            $this->db->from('schedules s');
+            $this->db->join('vials v', 's.vial_id = v.id', 'inner');
+            $this->db->where('s.status', 1); // Completed
+            $this->db->where('YEAR(s.updated_at)', $year);
+            $this->db->where('MONTH(s.updated_at)', $month);
+            $result = $this->db->get()->row();
+            
+            $vaccination_counts[] = $result ? (int)$result->count : 0;
+        }
+        
+        return [
+            'months' => array_reverse($months),
+            'incident_counts' => array_reverse($incident_counts),
+            'vaccination_counts' => array_reverse($vaccination_counts)
+        ];
+    }
 }

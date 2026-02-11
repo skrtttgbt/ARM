@@ -127,4 +127,10 @@ class Vaccines extends CI_Model {
 
         return $this->db->update('vaccines');
     }
+    
+    public function getTotalVaccines() {
+        $query = $this->db->where('deleted', 0)->get('vaccines');
+        
+        return $query->num_rows();
+    }
 }

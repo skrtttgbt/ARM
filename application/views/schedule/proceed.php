@@ -38,8 +38,8 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <a href="index.html">
-                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
+                        <a href="<?php echo base_url(); ?>dashboard">
+                            <!-- <img src="<?php echo base_url(); ?>assets/dist/img/lock-icon.png" alt="" class="img-fluid"> -->
                         </a>
                     </div>
                     <!-- ============================================================== -->
@@ -113,6 +113,12 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -125,7 +131,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -142,7 +148,7 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>incident/create/schedule/<?php echo $incident['id']; ?>" class="sidebar-link">
+                                    <a href="<?php echo base_url(); ?>incident/create_schedule/<?php echo $incident['id']; ?>" class="sidebar-link">
                                         <span class="hide-menu"> Schedule</span>
                                     </a>
                                 </li>
@@ -313,8 +319,9 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('barcode_error')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                if($this->session->flashdata('barcode_error')): ?>
                     <div class="alert alert-danger" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('barcode_error'); ?>
@@ -323,6 +330,11 @@
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
                         <?php echo $this->session->flashdata('success'); ?>
+                    </div>
+                <?php elseif($this->session->flashdata('error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $this->session->flashdata('error'); ?>
                     </div>
                 <?php endif; ?>
 

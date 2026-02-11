@@ -113,6 +113,12 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -308,6 +314,16 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                if($CI->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $CI->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
                 <h4 class="card-title">Create Administrator</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
@@ -331,7 +347,7 @@
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Mobile Number</label>
-                                            <input name="mobile" type="number" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="mobile" type="text" inputmode="numeric" placeholder="+639XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
                                             <?php echo form_error('mobile', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>

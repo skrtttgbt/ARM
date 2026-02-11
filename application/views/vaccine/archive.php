@@ -1,3 +1,9 @@
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+$CI->load->library('session');
+
+?>
 
 
 <!DOCTYPE html>
@@ -318,11 +324,14 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                $CI->load->library('session');
+                if($CI->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('message'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 

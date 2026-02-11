@@ -113,6 +113,13 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -309,15 +316,18 @@
             <!-- ============================================================== -->
             <div class="container-fluid">
 
-                <?php if($this->session->flashdata('barcode_error')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                if($CI->session->flashdata('barcode_error')): ?>
                     <div class="alert alert-danger" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('barcode_error'); ?>
+                        <?php echo $CI->session->flashdata('barcode_error'); ?>
                     </div>
-                <?php elseif($this->session->flashdata('success')): ?>
+                <?php elseif($CI->session->flashdata('success')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('success'); ?>
+                        <?php echo $CI->session->flashdata('success'); ?>
                     </div>
                 <?php endif; ?>
 
@@ -337,7 +347,7 @@
                                     </div>
                                     
                                     <?php 
-                                    if ($this->session->userdata('vial_barcode')) {
+                                    if ($CI->session->userdata('vial_barcode')) {
                                     ?>
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-3">

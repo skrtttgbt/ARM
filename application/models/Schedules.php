@@ -39,6 +39,13 @@ class Schedules extends CI_Model {
 
         return $query->result_array();
     }
+    
+    public function getTodaySchedulesCount() {
+        $today = date('Y-m-d');
+        $query = $this->db->where('DATE(schedule)', $today)->get('schedules');
+        
+        return $query->num_rows();
+    }
 
     public function updateScheduleDone($id,$code) {
 

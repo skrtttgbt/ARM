@@ -124,5 +124,10 @@ class Vials extends CI_Model {
         return $this->db->update('vials');
         
     }
-
+    
+    public function getTotalVials() {
+        $query = $this->db->where('deleted', 0)->get('vials');
+        
+        return $query->num_rows();
+    }
 }

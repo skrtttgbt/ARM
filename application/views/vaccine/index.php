@@ -1,5 +1,8 @@
-
-
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+$CI->load->library('session');
+?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -117,6 +120,13 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -129,7 +139,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -312,15 +322,23 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('message')): ?>
+                <?php 
+                // Get CodeIgniter instance to access session
+                $CI =& get_instance();
+                $CI->load->library('session');
+                if($CI->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('message'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Vaccine</h4>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title">Vaccine</h4>
+                    <a href="<?php echo base_url(); ?>vaccine/forecast" class="btn btn-primary">
+                        <i class="fas fa-chart-line"></i> Forecast
+                    </a>
+                </div>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -396,7 +414,7 @@
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Footer here</a>.
+            <footer class="footer text-center text-muted"> Animal Rabies Management System - Vaccine Management</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->
