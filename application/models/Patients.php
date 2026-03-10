@@ -88,7 +88,7 @@ class Patients extends CI_Model {
         $message = sprintf("We’ve registered your information in our system. \n\n(Vax Safe Ramos)");
             
         $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
             'phone_number' => $mobile
             ];
@@ -133,3 +133,4 @@ class Patients extends CI_Model {
         return $query->num_rows();
     }
 }
+

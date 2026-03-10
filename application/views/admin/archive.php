@@ -354,7 +354,7 @@ $CI =& get_instance();
                                                 ?>
                                                 <tr>
                                                     <td><?php echo ucwords($admin['first_name'] . " " . $admin['last_name']); ?></td>
-                                                    <td>+<?php echo $admin['mobile']; ?></td>
+                                                    <td><?php echo htmlspecialchars($admin['mobile']); ?></td>
                                                     <td><?php echo $admin['email']; ?></td>
                                                     <td><?php echo $admin['updated_at']; ?></td>
                                                     <td>
@@ -454,4 +454,3 @@ $CI =& get_instance();
 </body>
 
 </html>
-

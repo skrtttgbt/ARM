@@ -376,7 +376,7 @@
                                             <label for="inputHorizontalSuccess" class="col-form-label">Mobile Number</label>
                                             <div class="input-group">
                                                 <span class="input-group-text">+639</span>
-                                                <input name="mobile" type="text" inputmode="numeric" maxlength="9" placeholder="XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                                <input name="mobile" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
                                             </div>
                                             <?php echo form_error('mobile', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>

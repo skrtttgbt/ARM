@@ -159,7 +159,7 @@ class ScheduleController extends CI_Controller {
             $message = sprintf("you are next");
                 
             $data2 = [
-                'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+                'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
                 'message' => $message,
                 'phone_number' => $mobile
                 ];

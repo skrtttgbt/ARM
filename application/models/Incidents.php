@@ -78,6 +78,7 @@ class Incidents extends CI_Model {
     public function createSchedule() {
 
         $date = date("F j, Y");
+        $mobile = normalize_ph_mobile($this->input->post('mobile'));
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
@@ -94,9 +95,9 @@ class Incidents extends CI_Model {
         $message = sprintf("sched: %s", $this->input->post('sched_date'));
             
         $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
-            'phone_number' => '+'.$this->input->post('mobile')
+            'phone_number' => $mobile
             ];
             
         $ch = curl_init($url);

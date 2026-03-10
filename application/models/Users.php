@@ -1,6 +1,9 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+
 class Users extends CI_Model {
 
 	public function getUsers()
@@ -76,6 +79,8 @@ class Users extends CI_Model {
 
         $date = date("F j, Y");
         $mobile = normalize_ph_mobile($this->input->post('mobile'));
+        $default_password = (string) rand(11111111, 99999999);
+        $email = $this->input->post('email');
 
         $data = array(
         'level' => 1,
@@ -83,33 +88,127 @@ class Users extends CI_Model {
         'image' => "default.png",
         'first_name' => $this->input->post('first_name'),
         'last_name' => $this->input->post('last_name'),
-        'email' => $this->input->post('email'),
+        'email' => $email,
         'mobile' => $mobile,
-        'password' => md5($this->input->post('password')),
+        'password' => md5($default_password),
         'created_at' => $date,
         'updated_at' => time()
         );
 
+        $inserted = $this->db->insert('users', $data);
+        if (!$inserted) {
+            return false;
+        }
+
+        $message = sprintf("Your account is ready!\n\nUsername:\n%s\nPassword:\n%s", $email, $default_password);
+        $sms_sent = $this->sendSmsMessage($mobile, $message);
+
+        $subject = 'Your PetVax Admin Account';
+        $email_message = $message . "\n\nPlease change your password after your first login.";
+        $email_sent = $this->sendEmailMessage($email, $subject, $email_message);
+
+        if (!$sms_sent) {
+            log_message('error', 'Admin account SMS notification failed for: ' . $mobile);
+        }
+
+        if (!$email_sent) {
+            log_message('error', 'Admin account email notification failed for: ' . $email);
+            log_message('error', 'PHPMailer error: ' . $this->config->item('last_email_error'));
+        }
+
+        return true;
+
+    }
+
+    private function sendSmsMessage($mobile, $message)
+    {
+        if (empty($mobile)) {
+            return false;
+        }
+
         $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
-        $message = sprintf("You account is ready!\n\nUsername:\n%s\nPassword:\n%s", $this->input->post('email'), $this->input->post('email'));
-            
-        $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+        $data = [
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
             'phone_number' => $mobile
-            ];
-            
+        ];
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
         $response = curl_exec($ch);
         curl_close($ch);
-            //echo $response;
-        return $this->db->insert('users',$data);
 
+        return $response !== false;
+    }
+
+    private function sendEmailMessage($email, $subject, $message)
+    {
+        if (empty($email)) {
+            return false;
+        }
+
+        // Load SMTP credentials from application/config/email.php
+        $this->config->load('email', true, true);
+
+        $autoload = FCPATH . 'vendor/autoload.php';
+        if (!file_exists($autoload)) {
+            $this->config->set_item('last_email_error', 'Missing Composer autoload file at: ' . $autoload);
+            return false;
+        }
+
+        require_once $autoload;
+
+        if (!class_exists(PHPMailer::class)) {
+            $this->config->set_item('last_email_error', 'PHPMailer class not found after autoload.');
+            return false;
+        }
+
+        $smtp_host = $this->config->item('smtp_host');
+        $smtp_port = (int) ($this->config->item('smtp_port') ?: 587);
+        $smtp_user = $this->config->item('smtp_user');
+        $smtp_pass = $this->config->item('smtp_pass');
+        $smtp_secure = $this->config->item('smtp_crypto') ?: $this->config->item('smtp_secure');
+        $from_email = $this->config->item('from_email') ?: $smtp_user;
+        $from_name = $this->config->item('from_name') ?: 'PetVax Manager';
+
+        if (empty($smtp_host) || empty($smtp_user) || empty($smtp_pass) || empty($from_email)) {
+            $this->config->set_item('last_email_error', 'SMTP config missing (smtp_host/smtp_user/smtp_pass/from_email).');
+            return false;
+        }
+
+        $mail = new PHPMailer(true);
+
+        try {
+            $mail->isSMTP();
+            $mail->Host = $smtp_host;
+            $mail->SMTPAuth = true;
+            $mail->Username = $smtp_user;
+            $mail->Password = $smtp_pass;
+            $mail->Port = $smtp_port;
+            $mail->CharSet = 'UTF-8';
+            $mail->isHTML(false);
+
+            if (!empty($smtp_secure)) {
+                $mail->SMTPSecure = $smtp_secure;
+            } else {
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            }
+
+            $mail->setFrom($from_email, $from_name);
+            $mail->addAddress($email);
+            $mail->Subject = $subject;
+            $mail->Body = $message;
+
+            $sent = $mail->send();
+            $this->config->set_item('last_email_error', '');
+            return (bool) $sent;
+        } catch (PHPMailerException $e) {
+            $this->config->set_item('last_email_error', $e->getMessage());
+            return false;
+        }
     }
 
     public function getAdmins() {
@@ -197,7 +296,7 @@ class Users extends CI_Model {
                 }
                     
                 $data2 = [
-                    'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+                    'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
                     'message' => $message,
                     'phone_number' => $phone
                     ];
@@ -232,7 +331,7 @@ class Users extends CI_Model {
         $message = sprintf("Your password is reset. Use the default password below.\n\nPassword:\n%s", $rand);
             
         $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
             'phone_number' => $phone
             ];
@@ -268,7 +367,7 @@ class Users extends CI_Model {
         $message = sprintf("Your account is suspended.");
             
         $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
             'phone_number' => $phone
             ];
@@ -302,7 +401,7 @@ class Users extends CI_Model {
         $message = sprintf("Your account is re-activated.");
             
         $data2 = [
-            'api_token' => 'de58ea1dd508785da1e3c76551d1888e4994e7a6',
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
             'message' => $message,
             'phone_number' => $phone
             ];
@@ -321,3 +420,4 @@ class Users extends CI_Model {
         return $this->db->update('users');
     }
 }
+

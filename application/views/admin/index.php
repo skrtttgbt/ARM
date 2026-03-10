@@ -362,7 +362,7 @@ $CI->load->library('session');
                                                 ?>
                                                 <tr>
                                                     <td><?php echo ucwords($admin['first_name'] . " " . $admin['last_name']); ?></td>
-                                                    <td>+<?php echo $admin['mobile']; ?></td>
+                                                    <td><?php echo htmlspecialchars($admin['mobile']); ?></td>
                                                     <td><?php echo $admin['email']; ?></td>
                                                     <td><?php echo $admin['updated_at']; ?></td>
                                                     <td>
@@ -389,7 +389,7 @@ $CI->load->library('session');
                                                                     aria-hidden="true"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <p>New account password will be send to <b>+<?php echo $admin['mobile']; ?></b> via SMS.</p>
+                                                                <p>New account password will be send to <b><?php echo htmlspecialchars($admin['mobile']); ?></b> via SMS.</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-light"
