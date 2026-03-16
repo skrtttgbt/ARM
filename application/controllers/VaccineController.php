@@ -72,63 +72,7 @@ class VaccineController extends CI_Controller {
     }
 
     public function create() {
-        // Check if user is logged in
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-            return;
-        }
-
-        $session_id = $this->session->userdata('user_id');
-
-        $data['user_info'] = $this->users->getUser($session_id);
-
-        if(isset($_POST['removeBarcode'])) {
-
-            $this->session->unset_userdata('vaccine_barcode');
-            redirect('vaccine/create');
-
-        } else if(isset($_POST['checkBarcode'])) {
-
-            $barcode = $this->input->post('barcode');
-
-            if(!empty($barcode)) {
-
-                if(!$this->vaccines->getVaccineByBarcode($barcode)) {
-
-                    $this->session->set_userdata('vaccine_barcode', $barcode);
-
-                } else {
-
-                    $this->session->set_flashdata('barcode_error', 'Barcode is taken');
-                    redirect('vaccine/create');
-                }
-
-            } else {
-                $this->session->set_flashdata('barcode_error', 'Barcode is empty');
-                redirect('vaccine/create');
-            }
-            
-            $this->load->view('vaccine/create', $data);
-
-        } else {
-
-            $this->form_validation->set_rules('name', 'Vaccine Name', 'trim|required|min_length[2]');
-            $this->form_validation->set_rules('description', 'Vaccine Description', 'trim|required|min_length[2]');
-            $this->form_validation->set_rules('capacity', 'Vaccine Capacity', 'trim|required');
-            $this->form_validation->set_rules('amount', 'Vaccine Amount', 'trim|required');
-
-            if ($this->form_validation->run() == FALSE)
-            {
-                $this->load->view('vaccine/create', $data);
-            }
-            else
-            {
-                $this->vaccines->createVaccine();
-                $this->session->set_flashdata('message', 'New vaccine is created.');
-                redirect('vaccine');
-            }
-
-        }
+        redirect('vaccine');
     }
 
     public function view($id) {

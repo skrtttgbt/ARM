@@ -101,8 +101,8 @@ class PatientController extends CI_Controller {
         }
 
         $age = $d->diff(new DateTime())->y;
-        if ($age < 1) {
-            $this->form_validation->set_message('valid_birthday', 'You must be at least 1 year old.');
+        if ($age < 18) {
+            $this->form_validation->set_message('valid_birthday', 'This system is for adults only. Patient must be at least 18 years old.');
             return FALSE;
         }
 

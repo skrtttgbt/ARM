@@ -167,11 +167,6 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
                                     </a>
@@ -179,29 +174,6 @@
                             </ul>
                         </li>
 
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
                         <li class="list-divider"></li>
                         <li class="nav-small-cap"><span class="hide-menu">Account Management</span></li>
                         <li class="sidebar-item"> 
@@ -463,3 +435,4 @@
 </body>
 
 </html>
+

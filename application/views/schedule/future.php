@@ -40,8 +40,8 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <a href="<?php echo base_url(); ?>dashboard">
-                            <!-- <img src="<?php echo base_url(); ?>assets/dist/img/lock-icon.png" alt="" class="img-fluid"> -->
+                        <a href="index.html">
+                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
                         </a>
                     </div>
                     <!-- ============================================================== -->
@@ -121,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -166,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -294,7 +266,7 @@
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
                                     <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Schedule</li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Upcoming Schedule</li>
                                 </ol>
                             </nav>
                         </div>
@@ -317,27 +289,18 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-                <?php 
-                // Get CodeIgniter instance to access session
-                $CI =& get_instance();
-                $CI->load->library('session');
-                if($CI->session->flashdata('message')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $CI->session->flashdata('message'); ?>
-                    </div>
-                <?php elseif($CI->session->flashdata('error')): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $CI->session->flashdata('error'); ?>
+                        <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
                 <div class="btn-group mb-3" role="group" aria-label="Schedule Navigation">
-                                    <a href="<?php echo base_url(); ?>schedule" class="btn btn-outline-primary">Today's Schedule</a>
-                                    <a href="<?php echo base_url(); ?>schedule/future" class="btn btn-primary active">Upcoming Schedule</a>
-                                </div>
-                                <h4 class="card-title">Schedules</h4>
+                    <a href="<?php echo base_url(); ?>schedule" class="btn btn-outline-primary">Today's Schedule</a>
+                    <a href="<?php echo base_url(); ?>schedule/future" class="btn btn-primary active">Upcoming Schedule</a>
+                </div>
+                <h4 class="card-title">Upcoming Schedule</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -350,48 +313,46 @@
                                             <tr>
                                                 <th>Patient Name</th>
                                                 <th>Animal Type</th>
-                                                <th>Bite Date</th>
-                                                <th>Vaccine Schedule</th>
+                                                <th>Schedule Date</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                         <?php 
-                                        if($schedules && !empty($schedules)) {
+                                        $today = date('Y-m-d');
+                                        if($schedules) {
                                             foreach($schedules as $schedule) {
-                                            $checkDate = date("Y-m-d", strtotime($schedule['schedule'])); // convert to 2025-11-11
-
-                                            $today = date("Y-m-d");
-
-                                            if ($today <= $checkDate) {
-                                            // Check if incident exists
+                                            $checkDate = date('Y-m-d', strtotime($schedule['schedule']));
+                                            if ($checkDate <= $today) {
+                                                continue;
+                                            }
                                             $incident = $this->incidents->getIncident($schedule['incident_id']);
                                             if (!$incident) {
-                                                continue; // Skip this schedule if incident doesn't exist
+                                                continue;
                                             }
-                                            
-                                            // Check if patient exists
                                             $patient = $this->patients->getPatient($incident['patient_id']);
                                             if (!$patient) {
-                                                continue; // Skip this schedule if patient doesn't exist
-                                            }
-                                            
-                                            $attendee = $this->users->getUser($schedule['user_id']);
-                                            if (!$attendee) {
-                                                continue; // Skip this schedule if user doesn't exist
+                                                continue;
                                             }
                                             ?>
                                             <tr>
                                                 <td><?php echo $patient['patient_first_name'] . " " . $patient['patient_last_name']; ?></td>
                                                 <td><?php echo $incident['animal_type']; ?></td>
-                                                <td><?php echo $incident['bite_date']; ?></td>
-                                                <td><?php echo $schedule['schedule']; ?> 
+                                                <td><?php echo date('M j, Y', strtotime($schedule['schedule'])); ?></td>
+                                                <td>
+                                                <?php if((int)$schedule['status'] === 1) { ?>
+                                                    <button class="btn btn-success btn-sm">COMPLETED</button>
+                                                <?php } else { ?>
+                                                    <button class="btn btn-warning btn-sm" style="color:white">PENDING</button>
+                                                <?php } ?>
+                                                </td>
+                                                <td>
+                                                    <a href="<?php echo base_url() . "schedule/proceed/" . $schedule['id']; ?>" class="btn btn-primary btn-sm">Proceed</a>
                                                 </td>
                                             </tr>
                                             <?php
                                             }
-                                            }
-                                        } else {
-                                            echo "<tr><td colspan='4' class='text-center'>No future schedule data yet</td></tr>";
                                         }
                                         ?>
                                         </tbody>
@@ -409,7 +370,7 @@
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Footer here</a>.
+            <footer class="footer text-center text-muted"> Animal Rabies Management System</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->

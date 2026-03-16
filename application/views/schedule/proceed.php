@@ -8,6 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -38,8 +40,8 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <a href="<?php echo base_url(); ?>dashboard">
-                            <!-- <img src="<?php echo base_url(); ?>assets/dist/img/lock-icon.png" alt="" class="img-fluid"> -->
+                        <a href="index.html">
+                            <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
                         </a>
                     </div>
                     <!-- ============================================================== -->
@@ -119,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -148,11 +151,6 @@
                                         <span class="hide-menu"> list</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>incident/create_schedule/<?php echo $incident['id']; ?>" class="sidebar-link">
-                                        <span class="hide-menu"> Schedule</span>
-                                    </a>
-                                </li>
                             </ul>
                         </li>
                         <li class="list-divider"></li>
@@ -169,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -292,12 +261,12 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Schedule</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Schedule Proceed</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
                                     <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Schedule</li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Proceed</li>
                                 </ol>
                             </nav>
                         </div>
@@ -320,107 +289,72 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-                <?php 
-                // Get CodeIgniter instance to access session
-                if($this->session->flashdata('barcode_error')): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('barcode_error'); ?>
-                    </div>
-                <?php elseif($this->session->flashdata('success')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('success'); ?>
-                    </div>
-                <?php elseif($this->session->flashdata('error')): ?>
-                    <div class="alert alert-danger" role="alert">
-                        <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('error'); ?>
+                        <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Create Schedule</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Schedule Navigation">
+                    <a href="<?php echo base_url(); ?>schedule" class="btn btn-outline-primary">Back to Schedule</a>
+                </div>
+                <h4 class="card-title">Proceed Schedule</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
+
                             <div class="card-body">
-                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal'); ?>
-                                    <input type="hidden" value="<?php echo $patient['mobile']; ?>" name="mobile">
-                                    <button type="submit" name="sendNotif" class="btn btn-primary">Send an alert SMS</button>
-                                    <input type="hidden" value="<?php echo $schedule['id']; ?>" name="schedule_id">
-                                    <input type="hidden" value="<?php echo $user_info['id']; ?>" name="user_id">
-                                    <input type="hidden" value="<?php echo $incident['id']; ?>" name="incident_id">
-                                    <input type="hidden" value="<?php echo $patient['mobile']; ?>" name="mobile">
-                                    <div class="row">
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Patient First Name</label>
-                                            <input value="<?php echo $patient['patient_first_name']; ?>" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th>Patient Name</th>
+                                                <td><?php echo htmlspecialchars($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Mobile Number</th>
+                                                <td><?php echo htmlspecialchars($patient['mobile']); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Animal Type</th>
+                                                <td><?php echo htmlspecialchars($incident['animal_type']); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Bite Date</th>
+                                                <td><?php echo htmlspecialchars($incident['bite_date']); ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Schedule Date</th>
+                                                <td><?php echo date('M j, Y', strtotime($schedule['schedule'])); ?></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Send Notification</h5>
+                                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal'); ?>
+                                                    <input type="hidden" name="mobile" value="<?php echo htmlspecialchars($patient['mobile']); ?>">
+                                                    <button type="submit" name="sendNotif" value="1" class="btn btn-primary">Send SMS Notification</button>
+                                                </form>
+                                            </div>
                                         </div>
-
-                                        
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Patient Last Name</label>
-                                            <input value="<?php echo $patient['patient_last_name']; ?>" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h5 class="card-title">Check Barcode</h5>
+                                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal'); ?>
+                                                    <div class="form-group">
+                                                        <label for="barcodeInput" class="col-form-label">Vial Barcode</label>
+                                                        <input type="text" name="barcode" id="barcodeInput" class="form-control" placeholder="Enter barcode">
+                                                    </div>
+                                                    <button type="submit" name="checkBarcode" value="1" class="btn btn-success mt-3">Submit Barcode</button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
-
-
-                                    <div class="row">
-                                        <div class="form-group mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Animal Type</label>
-                                            <input value="<?php echo $incident['animal_type']; ?>" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
-                                            <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Bite Date</label>
-                                            <input value="<?php echo $incident['bite_date']; ?>" name="bite_date" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
-                                            <?php echo form_error('bite_date', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-
-                                        
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Bite Place</label>
-                                            <input value="<?php echo $incident['bite_site']; ?>" name="bite_place" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
-                                            <?php echo form_error('bite_place', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-
-
-                                    <div class="row">
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Height</label>
-                                            <input value="<?php echo $incident['height']; ?>" name="height" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
-                                            <?php echo form_error('height', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-
-                                        
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Weight</label>
-                                            <input value="<?php echo $incident['weight']; ?>" name="weight" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
-                                            <?php echo form_error('weight', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-
-                                    <hr>
-
-                                    <div class="row">
-                                        <div class="form-group col-md-12">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Barcode (Scan the barcode)</label>
-                                            <input name="barcode" type="text" value="" class="form-control">
-                                            <?php echo form_error('barcode', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="form-group col-md-12 mt-4">
-                                            <button type="submit" name="checkBarcode" class="btn btn-primary">Submit</button>
-                                        </div>
-                                    </div>
-                                </form>
-
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -433,7 +367,7 @@
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Footer here</a>.
+            <footer class="footer text-center text-muted"> Animal Rabies Management System</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->
@@ -468,16 +402,11 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
+
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $(function () {
-            $('[data-plugin="knob"]').knob();
-        });
-    </script>
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        let today = new Date().toISOString().split("T")[0];
-        document.getElementById("dateInput").setAttribute("min", today);
-    });
+        $('#default_order').DataTable();
     </script>
 </body>
 

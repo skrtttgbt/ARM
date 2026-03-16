@@ -1,5 +1,3 @@
-<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
-
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -42,9 +40,9 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <!-- <a href="index.html">
+                        <a href="index.html">
                             <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
-                        </a> -->
+                        </a>
                     </div>
                     <!-- ============================================================== -->
                     <!-- End Logo -->
@@ -123,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -152,11 +151,6 @@
                                         <span class="hide-menu"> list</span>
                                     </a>
                                 </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>incident/create/<?php echo isset($patient['id']) ? $patient['id'] : ''; ?>" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
                             </ul>
                         </li>
                         <li class="list-divider"></li>
@@ -173,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -300,13 +265,21 @@
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>patient" class="text-muted">Patient</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Profile</li>
+                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Patient Profile</li>
                                 </ol>
                             </nav>
                         </div>
                     </div>
+                    <!-- <div class="col-5 align-self-center">
+                        <div class="customize-input float-end">
+                            <select class="custom-select custom-select-set form-control bg-white border-0 custom-shadow custom-radius">
+                                <option selected>Aug 23</option>
+                                <option value="1">July 23</option>
+                                <option value="2">Jun 23</option>
+                            </select>
+                        </div>
+                    </div> -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -324,76 +297,69 @@
                 <?php endif; ?>
 
                 <div class="btn-group mb-3" role="group" aria-label="Patient Navigation">
-                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">List</a>
-                    <a href="<?php echo base_url(); ?>patient/profile/<?php echo $patient['id']; ?>" class="btn btn-primary active">Profile</a>
-                    <a href="<?php echo base_url(); ?>patient/history/<?php echo $patient['id']; ?>" class="btn btn-outline-primary">History</a>
-                </div>
-                
+                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Back to Patients</a>
+                                    <a href="<?php echo base_url() . "patient/history/" . $patient['id']; ?>" class="btn btn-info">View History</a>
+                                </div>
+                                <h4 class="card-title">Patient Profile</h4>
                 <div class="row">
-                    <div class="col-lg-12">
+                    <div class="col-lg-12 ">
                         <div class="card">
-                            <div class="card-header bg-info text-white">
-                                <h4 class="mb-0">Patient Profile</h4>
-                            </div>
+
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <h5>Personal Information</h5>
-                                        <table class="table table-borderless">
+                                        <table class="table table-bordered">
                                             <tr>
-                                                <td><strong>Full Name:</strong></td>
-                                                <td><?php echo htmlspecialchars($patient['patient_first_name'] . ' ' . $patient['patient_last_name']); ?></td>
+                                                <th>Full Name</th>
+                                                <td><?php echo htmlspecialchars(ucwords($patient['patient_first_name'] . ' ' . $patient['patient_last_name'])); ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Gender:</strong></td>
+                                                <th>Gender</th>
                                                 <td><?php echo htmlspecialchars(ucwords($patient['gender'])); ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Birthday:</strong></td>
-                                                <td><?php echo htmlspecialchars($patient['birthday']); ?></td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Age:</strong></td>
+                                                <th>Age</th>
                                                 <td><?php echo (new DateTime($patient['birthday']))->diff(new DateTime())->y; ?> years old</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Height:</strong></td>
-                                                <td><?php echo !empty($patient['height']) ? htmlspecialchars($patient['height']) . ' cm' : 'N/A'; ?></td>
+                                                <th>Birthday</th>
+                                                <td><?php echo htmlspecialchars($patient['birthday']); ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Weight:</strong></td>
-                                                <td><?php echo !empty($patient['weight']) ? htmlspecialchars($patient['weight']) . ' kg' : 'N/A'; ?></td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Mobile:</strong></td>
+                                                <th>Mobile Number</th>
                                                 <td><?php echo htmlspecialchars($patient['mobile']); ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Address:</strong></td>
+                                                <th>Address</th>
                                                 <td><?php echo htmlspecialchars($patient['address']); ?></td>
                                             </tr>
                                         </table>
                                     </div>
                                     <div class="col-md-6">
-                                        <h5>PhilHealth Information</h5>
-                                        <table class="table table-borderless">
+                                        <table class="table table-bordered">
                                             <tr>
-                                                <td><strong>Account Type:</strong></td>
+                                                <th>Height</th>
+                                                <td><?php echo !empty($patient['height']) ? htmlspecialchars($patient['height']) . ' cm' : 'N/A'; ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Weight</th>
+                                                <td><?php echo !empty($patient['weight']) ? htmlspecialchars($patient['weight']) . ' kg' : 'N/A'; ?></td>
+                                            </tr>
+                                            <tr>
+                                                <th>PhilHealth Type</th>
                                                 <td><?php echo htmlspecialchars($patient['philhealth_type']); ?></td>
                                             </tr>
-                                            <?php if($patient['philhealth_type'] != 'Member'): ?>
                                             <tr>
-                                                <td><strong>Relationship:</strong></td>
-                                                <td><?php echo htmlspecialchars($patient['philhealth_relationship']); ?></td>
+                                                <th>Relationship</th>
+                                                <td><?php echo $patient['philhealth_relationship'] !== '' ? htmlspecialchars($patient['philhealth_relationship']) : 'N/A'; ?></td>
                                             </tr>
-                                            <?php endif; ?>
                                             <tr>
-                                                <td><strong>Account Number:</strong></td>
+                                                <th>PhilHealth No.</th>
                                                 <td><?php echo htmlspecialchars($patient['philhealth_no']); ?></td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Member Name:</strong></td>
-                                                <td><?php echo htmlspecialchars($patient['philhealth_first_name'] . ' ' . $patient['philhealth_last_name']); ?></td>
+                                                <th>PhilHealth Name</th>
+                                                <td><?php echo htmlspecialchars(ucwords($patient['philhealth_first_name'] . ' ' . $patient['philhealth_last_name'])); ?></td>
                                             </tr>
                                         </table>
                                     </div>
@@ -401,6 +367,7 @@
                             </div>
                         </div>
                     </div>
+                    <!-- column -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -444,11 +411,13 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
+
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $(function () {
-            $('[data-plugin="knob"]').knob();
-        });
+        $('#default_order').DataTable();
     </script>
 </body>
 
 </html>
+

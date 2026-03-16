@@ -8,7 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
-    <link href="<?php echo base_url(); ?>assets/libs/morris.js/morris.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -39,9 +40,9 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <!-- <a href="index.html">
+                        <a href="index.html">
                             <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
-                        </a> -->
+                        </a>
                     </div>
                     <!-- ============================================================== -->
                     <!-- End Logo -->
@@ -115,6 +116,13 @@
                     <ul id="sidebarnav">
                         <li class="nav-small-cap"><span class="hide-menu">PetVax Manager</span></li>
                         <li class="sidebar-item"> 
+                            <a class="sidebar-link sidebar-link" href="<?php echo base_url(); ?>dashboard" aria-expanded="false">
+                                <i data-feather="home" class="feather-icon"></i>
+                                <span class="hide-menu">Dashboard</span>
+                            </a>
+                        </li>
+
+                        <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
                                 <span class="hide-menu">Schedule </span>
@@ -127,7 +135,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -153,40 +161,14 @@
                                 <span class="hide-menu">Vaccine </span>
                             </a>
                             <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item"> 
-                                    <a class="has-arrow sidebar-link" href="<?php echo base_url(); ?>vaccine"
-                                                aria-expanded="false">
-                                                <span class="hide-menu"> List</span></a>
-                                            
-                                        </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
+                                    <a href="<?php echo base_url(); ?>vaccine" class="sidebar-link">
+                                        <span class="hide-menu"> List</span>
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                                
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
                                     </a>
                                 </li>
                             </ul>
@@ -279,12 +261,12 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Vaccine</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Vaccine Analysis</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Update Vaccine</li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Vaccine Analysis</li>
                                 </ol>
                             </nav>
                         </div>
@@ -307,29 +289,95 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php if($this->session->flashdata('barcode_error')): ?>
-                    <div class="alert alert-danger" role="alert">
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $this->session->flashdata('barcode_error'); ?>
+                        <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Vaccine Demand <?php echo $this->vaccines->getTransactionByYearMonthInfo('2025','11',$vaccine['id']); ?></h4>
+                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
+                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-primary active">Incident List</a>
+                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Select Patient to Create Incident</a>
+                                </div>
+                                <h4 class="card-title">Incidents</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
+
                             <div class="card-body">
-                                <h4 class="card-title"><?php echo $vaccine['name']; ?></h4>
-                                <ul class="list-inline text-end">
-                                    <li class="list-inline-item">
-                                        <h5><i class="fa fa-circle me-1 text-info"></i>Usage</h5>
-                                    </li>
-                                    <li class="list-inline-item">
-                                        <h5><i class="fa fa-circle me-1 text-cyan"></i>Demand</h5>
-                                    </li>
-                                </ul>
-                                <div id="morris-area-chart"></div>
+                                
+                                <div class="table-responsive">
+                                    <table id="default_order"class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient Name</th>
+                                                <th>Animal Type</th>
+                                                <th>Bite Date</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php 
+                                        if(isset($incidents) && $incidents) {
+                                            foreach($incidents as $incident) {
+                                            
+                                            $patient = $this->patients->getPatient($incident['patient_id']);
+                                            ?>
+                                            <tr>
+                                                <td><?php echo $patient['patient_first_name'] . " " . $patient['patient_last_name']; ?></td>
+                                                <td><?php echo $incident['animal_type']; ?></td>
+                                                <td><?php echo $incident['bite_date']; ?></td>
+                                                <td>
+                                                <?php
+                                                $checkSchedule = $this->incidents->checkSchedule($incident['id']);
+                                                $checkCompletedSchedule = $this->incidents->countCompletedSchedule($incident['id']); 
+                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                ?>
+                                                
+                                                <button class="btn btn-success btn-sm">COMPLETE</button>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                <button class="btn btn-warning btn-sm" style="color:white">ON-GOING</button>
+                                                <?php 
+                                                }
+                                                ?>
+                                                
+                                                
+                                                </td>
+                                                <td>
+                                                <?php
+                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                ?>
+                                                <a class="btn btn-secondary btn-sm">Transaction Complete</a>
+                                                <?php
+                                                } else {
+
+                                                    if($checkSchedule) {
+                                                    ?>
+                                                        <button class="btn btn-secondary btn-sm">SCHEDULED</button>
+                                                    <?php 
+                                                    } else {
+                                                    ?>
+                                                        <a href="<?php echo base_url() . "incident/create_schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
+                                                    <?php  
+                                                    }
+
+                                                
+                                                }
+                                                ?>    
+                                                    
+                                                </td>
+                                            </tr>
+                                            <?php
+                                            }
+                                        }
+                                        ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -377,47 +425,13 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
-    
-    <script src="<?php echo base_url(); ?>assets/libs/raphael/raphael.min.js"></script>
-    <script src="<?php echo base_url(); ?>assets/libs/morris.js/morris.min.js"></script>
-    <script>
-        $(function () {
-    "use strict";
-            $('[data-plugin="knob"]').knob();
 
-Morris.Line({
-        element: 'morris-area-chart',
-        data: [
-        { period: 'January', usage: 0, demand: null, itouch: 80 },
-        { period: 'February', usage: 0, demand: null, itouch: 80 },
-        { period: 'March', usage: 0, demand: null, itouch: 80 },
-        { period: 'April', usage: 0, demand: null, itouch: 80 },
-        { period: 'May', usage: 0, demand: null, itouch: 80 },
-        { period: 'June', usage: 0, demand: null, itouch: 80 },
-        { period: 'July', usage: 0, demand: null, itouch: 80 },
-        { period: 'August', usage: 0, demand: null, itouch: 80 },
-        { period: 'September', usage: 0, demand: null, itouch: 80 },
-        { period: 'October', usage: 0, demand: null, itouch: 80 },
-        { period: 'November', usage: <?php echo $this->vaccines->getTransactionByYearMonthInfo(2025,11,$vaccine['id']); ?>, demand: <?php echo $this->vaccines->getTransactionByYearMonthInfo(2025,11,$vaccine['id']); ?>, itouch: 80 },
-        { period: 'December', usage: null, demand: <?php echo $this->vaccines->getTransactionByYearMonthInfo(2024,12,$vaccine['id']); ?>, itouch: 80 }
-    ],
-        xkey: 'period',
-        ykeys: ['usage', 'demand'],
-        labels: ['Usage', 'Demand'],
-        pointSize: 3,
-        fillOpacity: 0,
-        pointStrokeColors:['#5f76e8', '#01caf1'],
-        behaveLikeLine: true,
-        gridLineColor: '#e0e0e0',
-        lineWidth: 3,
-        hideHover: 'auto',
-        lineColors: ['#5f76e8', '#01caf1'],
-        resize: true,
-        parseTime: false
-        
-    });
-        });
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
+    <script>
+        $('#default_order').DataTable();
     </script>
 </body>
 
 </html>
+

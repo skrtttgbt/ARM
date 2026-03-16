@@ -2,7 +2,10 @@
 // Get CodeIgniter instance to access session
 $CI =& get_instance();
 $CI->load->library('session');
+
 ?>
+
+
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -126,7 +129,6 @@ $CI->load->library('session');
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
-
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -140,7 +142,7 @@ $CI->load->library('session');
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Upcoming</span>
+                                        <span class="hide-menu"> Up Comming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -172,37 +174,8 @@ $CI->load->library('session');
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -299,7 +272,7 @@ $CI->load->library('session');
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
                                     <li class="breadcrumb-item text-muted active" aria-current="page">Vaccine List</li>
                                 </ol>
                             </nav>
@@ -334,12 +307,7 @@ $CI->load->library('session');
                     </div>
                 <?php endif; ?>
 
-                <div class="d-flex justify-content-between align-items-center">
-                    <h4 class="card-title">Vaccine</h4>
-                    <a href="<?php echo base_url(); ?>vaccine/forecast" class="btn btn-primary">
-                        <i class="fas fa-chart-line"></i> Forecast
-                    </a>
-                </div>
+                <h4 class="card-title">Vaccine - Archive</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -370,10 +338,7 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
                                                     <td>
-                                                        <a class="btn btn-secondary dropdown-toggle btn-sm" href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>"><i class="fas fa-edit"></i></a>
                                                         <a class="btn btn-secondary dropdown-toggle btn-sm"  data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>"><i class="fas fa-trash-alt"></i></a>
-                                                        <a class="btn btn-secondary dropdown-toggle btn-sm" href="<?php echo base_url() . "vaccine/analyze/" . $vaccine['id']; ?>"><i class="far fa-chart-bar"></i></a>
-                                                        
                                                     </td>
                                                 </tr>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
@@ -381,17 +346,17 @@ $CI->load->library('session');
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Delete Confirmation</h4>
+                                                                <h4 class="modal-title" id="myModalLabel">Retreive Confirmation</h4>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                     aria-hidden="true"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <p>Are you sure wyou want to delete?</p>
+                                                                <p>Are you sure wyou want to retrieve?</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-light"
                                                                     data-bs-dismiss="modal">Close</button>
-                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/remove/" . $vaccine['id']; ?>">Proceed</a>
+                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/retreive/" . $vaccine['id']; ?>">Proceed</a>
                                                             </div>
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->
@@ -415,7 +380,7 @@ $CI->load->library('session');
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Animal Rabies Management System - Vaccine Management</a>.
+            <footer class="footer text-center text-muted"> Footer here</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->
@@ -459,3 +424,4 @@ $CI->load->library('session');
 </body>
 
 </html>
+

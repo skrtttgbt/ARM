@@ -120,22 +120,26 @@ class DashboardController extends CI_Controller {
             }
 
             $patient_name = trim($row['patient_first_name'] . ' ' . $row['patient_last_name']);
+            $should_send_d2 = (int)$row['dose'] >= 2 && (int)$row['reminder_d2_sent'] === 0 && $today >= $due_d2;
+            $should_send_d3 = (int)$row['dose'] >= 3 && (int)$row['reminder_d3_sent'] === 0 && $today >= $due_d3;
 
-            if ((int)$row['dose'] >= 2 && (int)$row['reminder_d2_sent'] === 0 && $today >= $due_d2) {
-                $message = "Reminder: Your 2nd dose is due. Please visit the clinic. Patient: " . $patient_name;
-                if (send_semaphore_sms($api_key, $mobile, $message)) {
-                    $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d2_sent', 1);
-                    $sent_d2++;
-                } else {
-                    $skipped++;
-                }
-            }
+            if ($should_send_d2 || $should_send_d3) {
+                $message = $this->buildVaccinationReminderMessage(
+                    $patient_name,
+                    $due_d2,
+                    ((int)$row['dose'] >= 3) ? $due_d3 : null
+                );
 
-            if ((int)$row['dose'] >= 3 && (int)$row['reminder_d3_sent'] === 0 && $today >= $due_d3) {
-                $message = "Reminder: Your 3rd dose is due. Please visit the clinic. Patient: " . $patient_name;
                 if (send_semaphore_sms($api_key, $mobile, $message)) {
-                    $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d3_sent', 1);
-                    $sent_d3++;
+                    if ($should_send_d2) {
+                        $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d2_sent', 1);
+                        $sent_d2++;
+                    }
+
+                    if ($should_send_d3) {
+                        $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d3_sent', 1);
+                        $sent_d3++;
+                    }
                 } else {
                     $skipped++;
                 }
@@ -147,6 +151,23 @@ class DashboardController extends CI_Controller {
             "Reminders sent. Dose 2: {$sent_d2}, Dose 3: {$sent_d3}, Skipped: {$skipped}."
         );
         redirect('dashboard');
+    }
+
+    private function buildVaccinationReminderMessage($patient_name, $dose2_date, $dose3_date = null)
+    {
+        $message = "Dear {$patient_name},\n\n";
+        $message .= "This is a friendly reminder about your upcoming vaccination schedule:\n\n";
+        $message .= "- 2nd Dose: " . date('m/d/Y', strtotime($dose2_date)) . ", 8:00 AM - 5:00 PM\n";
+
+        if (!empty($dose3_date)) {
+            $message .= "- 3rd Dose/Booster: " . date('m/d/Y', strtotime($dose3_date)) . ", 8:00 AM - 5:00 PM\n\n";
+        } else {
+            $message .= "\n";
+        }
+
+        $message .= "Reminder: The clinic is open 8:00 AM - 5:00 PM only.";
+
+        return $message;
     }
     
     private function getVialForecastData() {
@@ -198,50 +219,80 @@ class DashboardController extends CI_Controller {
     }
     
     private function getChartData() {
-        // Get monthly incident counts for the last 6 months
+        $history_months = 12;
+        $forecast_months = 3;
         $months = [];
         $incident_counts = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
+
+        for ($i = $history_months - 1; $i >= 0; $i--) {
             $date = date('Y-m', strtotime("-$i months"));
             $year = substr($date, 0, 4);
             $month = substr($date, 5, 2);
-            
-            // Count incidents for this month
+
             $this->db->select('COUNT(*) as count');
             $this->db->from('incidents');
-            $this->db->where('YEAR(created_at)', $year);
-            $this->db->where('MONTH(created_at)', $month);
+            $this->db->where("STR_TO_DATE(created_at, '%M %e, %Y') IS NOT NULL", null, false);
+            $this->db->where("YEAR(STR_TO_DATE(created_at, '%M %e, %Y')) = {$year}", null, false);
+            $this->db->where("MONTH(STR_TO_DATE(created_at, '%M %e, %Y')) = {$month}", null, false);
             $result = $this->db->get()->row();
-            
+
             $months[] = date('M Y', strtotime($date));
             $incident_counts[] = $result ? (int)$result->count : 0;
         }
-        
-        // Get monthly vaccination counts for the last 6 months
-        $vaccination_counts = [];
-        
-        for ($i = 5; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i months"));
-            $year = substr($date, 0, 4);
-            $month = substr($date, 5, 2);
-            
-            // Count completed schedules for this month
-            $this->db->select('COUNT(*) as count');
-            $this->db->from('schedules s');
-            $this->db->join('vials v', 's.vial_id = v.id', 'inner');
-            $this->db->where('s.status', 1); // Completed
-            $this->db->where('YEAR(s.updated_at)', $year);
-            $this->db->where('MONTH(s.updated_at)', $month);
-            $result = $this->db->get()->row();
-            
-            $vaccination_counts[] = $result ? (int)$result->count : 0;
+
+        $predicted_values = $this->predictIncidentCounts($incident_counts, $forecast_months);
+        $actual_series = $incident_counts;
+        $prediction_series = array_fill(0, count($incident_counts) - 1, null);
+        $prediction_series[] = end($incident_counts);
+
+        for ($i = 1; $i <= $forecast_months; $i++) {
+            $future_date = date('Y-m', strtotime("+$i months"));
+            $months[] = date('M Y', strtotime($future_date));
+            $actual_series[] = null;
+            $prediction_series[] = $predicted_values[$i - 1];
         }
-        
+
         return [
-            'months' => array_reverse($months),
-            'incident_counts' => array_reverse($incident_counts),
-            'vaccination_counts' => array_reverse($vaccination_counts)
+            'months' => $months,
+            'incident_counts' => $actual_series,
+            'predicted_incident_counts' => $prediction_series
         ];
+    }
+
+    private function predictIncidentCounts($incident_counts, $forecast_months)
+    {
+        $count = count($incident_counts);
+        if ($count === 0) {
+            return array_fill(0, $forecast_months, 0);
+        }
+
+        if ($count === 1) {
+            return array_fill(0, $forecast_months, (int) $incident_counts[0]);
+        }
+
+        $sum_x = 0;
+        $sum_y = 0;
+        $sum_xy = 0;
+        $sum_x2 = 0;
+
+        foreach ($incident_counts as $index => $value) {
+            $x = $index + 1;
+            $sum_x += $x;
+            $sum_y += $value;
+            $sum_xy += $x * $value;
+            $sum_x2 += $x * $x;
+        }
+
+        $denominator = ($count * $sum_x2) - ($sum_x * $sum_x);
+        $slope = $denominator !== 0 ? (($count * $sum_xy) - ($sum_x * $sum_y)) / $denominator : 0;
+        $intercept = ($sum_y - ($slope * $sum_x)) / $count;
+
+        $predictions = [];
+        for ($i = 1; $i <= $forecast_months; $i++) {
+            $x = $count + $i;
+            $predictions[] = max(0, (int) round($intercept + ($slope * $x)));
+        }
+
+        return $predictions;
     }
 }

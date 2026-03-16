@@ -8,6 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -119,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -164,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -291,7 +265,7 @@
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
                                     <li class="breadcrumb-item text-muted active" aria-current="page">Dashboard</li>
                                 </ol>
                             </nav>
@@ -315,189 +289,108 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $this->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="row">
-                    <div class="col-lg-12">
+                    <div class="col-md-6 col-xl-3">
                         <div class="card">
                             <div class="card-body">
-                                <h4 class="card-title">Dashboard Overview</h4>
-                                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
-                                    <div class="alert alert-info mt-3">
-                                        <?php echo $this->session->flashdata('message'); ?>
-                                    </div>
-                                <?php endif; ?>
+                                <h6 class="text-muted">Total Patients</h6>
+                                <h2 class="mb-0"><?php echo (int) $total_patients; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="text-muted">Total Incidents</h6>
+                                <h2 class="mb-0"><?php echo (int) $total_incidents; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="text-muted">Schedules Today</h6>
+                                <h2 class="mb-0"><?php echo (int) $total_schedules_today; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="text-muted">Available Vaccines</h6>
+                                <h2 class="mb-0"><?php echo (int) $total_vaccines; ?></h2>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Statistics Cards Row -->
+
                 <div class="row">
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-lg-7">
                         <div class="card">
                             <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="m-r-10">
-                                        <span class="btn btn-info btn-circle">
-                                            <i class="fas fa-users"></i>
-                                        </span>
-                                    </div>
-                                    <div class="">
-                                        <h3 class="mb-0 font-weight-semibold"><?php echo $total_patients; ?></h3>
-                                        <span class="text-muted">Total Patients</span>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">Incident Trend and Prediction</h5>
+                                        <p class="text-muted mb-0">Actual vs predicted incidents for the last 12 months</p>
                                     </div>
                                 </div>
+                                <canvas id="monthlyTrendsChart" height="120"></canvas>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="col-md-3 col-sm-6">
+                    <div class="col-lg-5">
                         <div class="card">
                             <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="m-r-10">
-                                        <span class="btn btn-warning btn-circle">
-                                            <i class="fas fa-exclamation-triangle"></i>
-                                        </span>
-                                    </div>
-                                    <div class="">
-                                        <h3 class="mb-0 font-weight-semibold"><?php echo $total_incidents; ?></h3>
-                                        <span class="text-muted">Total Incidents</span>
+                                <h5 class="card-title mb-3">Vial Forecast</h5>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total Vials</span>
+                                        <strong><?php echo (int) $forecast_data['total_vials']; ?></strong>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-3 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="m-r-10">
-                                        <span class="btn btn-success btn-circle">
-                                            <i class="fas fa-calendar-check"></i>
-                                        </span>
-                                    </div>
-                                    <div class="">
-                                        <h3 class="mb-0 font-weight-semibold"><?php echo $total_schedules_today; ?></h3>
-                                        <span class="text-muted">Today's Schedules</span>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Used</span>
+                                        <strong><?php echo (int) $forecast_data['used_vials']; ?></strong>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-3 col-sm-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="m-r-10">
-                                        <span class="btn btn-primary btn-circle">
-                                            <i class="fas fa-vial"></i>
-                                        </span>
-                                    </div>
-                                    <div class="">
-                                        <h3 class="mb-0 font-weight-semibold"><?php echo $total_vials; ?></h3>
-                                        <span class="text-muted">Total Vials</span>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Available</span>
+                                        <strong><?php echo (int) $forecast_data['available_vials']; ?></strong>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Second row with Total Vaccines and Vial Forecast -->
-                <div class="row">
-                    <div class="col-md-6 col-sm-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="m-r-10">
-                                        <span class="btn btn-success btn-circle">
-                                            <i class="fas fa-syringe"></i>
-                                        </span>
-                                    </div>
-                                    <div class="">
-                                        <h3 class="mb-0 font-weight-semibold"><?php echo $total_vaccines; ?></h3>
-                                        <span class="text-muted">Total Vaccines</span>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Pending Schedules</span>
+                                        <strong><?php echo (int) $forecast_data['pending_schedules']; ?></strong>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Vial Forecast Card -->
-                    <div class="col-md-6 col-sm-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="card-title">Vial Supply Forecast</h4>
-                                <div class="progress mb-3">
-                                    <div class="progress-bar <?php echo $forecast_data['stock_status'] === 'critical' ? 'bg-danger' : ($forecast_data['stock_status'] === 'low' ? 'bg-warning' : 'bg-success'); ?>" role="progressbar" style="width: <?php echo $forecast_data['usage_percentage']; ?>%" aria-valuenow="<?php echo $forecast_data['usage_percentage']; ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <span>Used: <?php echo $forecast_data['used_vials']; ?>/<?php echo $forecast_data['total_vials']; ?></span>
-                                    <span>Available: <?php echo $forecast_data['available_vials']; ?></span>
-                                </div>
-                                
-                                <div class="row mt-2">
-                                    <div class="col-6">
-                                        <h6 class="text-muted">Pending Schedules</h6>
-                                        <h4 class="font-weight-semibold"><?php echo $forecast_data['pending_schedules']; ?></h4>
-                                    </div>
-                                    <div class="col-6">
-                                        <h6 class="text-muted">Projected Shortage</h6>
-                                        <h4 class="font-weight-semibold text-<?php echo $forecast_data['projected_shortage'] > 0 ? 'danger' : 'success'; ?>">
-                                            <?php echo $forecast_data['projected_shortage']; ?>
-                                        </h4>
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Projected Shortage</span>
+                                        <strong class="text-<?php echo $forecast_data['projected_shortage'] > 0 ? 'danger' : 'success'; ?>">
+                                            <?php echo (int) $forecast_data['projected_shortage']; ?>
+                                        </strong>
                                     </div>
                                 </div>
-                                
-                                <div class="mt-3">
+                                <div class="mb-3">
                                     <span class="badge badge-<?php echo $forecast_data['stock_status'] === 'critical' ? 'danger' : ($forecast_data['stock_status'] === 'low' ? 'warning' : 'success'); ?>">
                                         <?php echo ucfirst($forecast_data['stock_status']); ?> Stock Level
                                     </span>
-                                    <?php if($forecast_data['projected_shortage'] > 0): ?>
-                                        <span class="badge badge-danger">Need <?php echo $forecast_data['projected_shortage']; ?> More Vials</span>
-                                    <?php endif; ?>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">System Information</h5>
-                                <p>Welcome to the Animal Rabies Management System.</p>
-                                <p>You can manage patients, incidents, vaccinations, and vials from the navigation menu.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Quick Actions</h5>
-                                <div class="btn-list">
-                                    <a href="<?php echo base_url(); ?>patient/create" class="btn btn-primary btn-sm m-1">Add New Patient</a>
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="btn btn-success btn-sm m-1">Add New Vaccine</a>
-                                    <a href="<?php echo base_url(); ?>vial/create" class="btn btn-info btn-sm m-1">Create Vial</a>
-                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-warning btn-sm m-1">View Incidents</a>
+                                <div>
                                     <?php echo form_open(base_url('dashboard/send_reminders'), 'class="d-inline"'); ?>
-                                        <button type="submit" class="btn btn-secondary btn-sm m-1">Send Reminders</button>
+                                        <button type="submit" class="btn btn-primary">Send SMS Reminders</button>
                                     </form>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Charts Section -->
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">Monthly Trends</h5>
-                                <canvas id="monthlyTrendsChart" height="150"></canvas>
                             </div>
                         </div>
                     </div>
@@ -544,39 +437,44 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
-    <!-- Chart.js for dashboard charts -->
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         $(function () {
             $('[data-plugin="knob"]').knob();
         });
-        
-        // Render the monthly trends chart
+
         document.addEventListener('DOMContentLoaded', function() {
             var ctx = document.getElementById('monthlyTrendsChart').getContext('2d');
-            
-            // Prepare data for the chart
             var months = <?php echo json_encode($chart_data['months']); ?>;
             var incidentCounts = <?php echo json_encode($chart_data['incident_counts']); ?>;
-            var vaccinationCounts = <?php echo json_encode($chart_data['vaccination_counts']); ?>;
-            
-            // Create the chart
-            var monthlyTrendsChart = new Chart(ctx, {
-                type: 'bar',
+            var predictedIncidentCounts = <?php echo json_encode($chart_data['predicted_incident_counts']); ?>;
+
+            new Chart(ctx, {
+                type: 'line',
                 data: {
                     labels: months,
                     datasets: [{
-                        label: 'Incidents Reported',
+                        label: 'Actual Incidents',
                         data: incidentCounts,
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
                         borderColor: 'rgb(255, 99, 132)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(255, 99, 132, 0.15)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        spanGaps: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }, {
-                        label: 'Vaccinations Completed',
-                        data: vaccinationCounts,
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        label: 'Predicted Incidents',
+                        data: predictedIncidentCounts,
                         borderColor: 'rgb(54, 162, 235)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                        borderWidth: 3,
+                        borderDash: [8, 6],
+                        tension: 0.35,
+                        spanGaps: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }]
                 },
                 options: {
@@ -584,7 +482,10 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Monthly Trends - Last 6 Months'
+                            text: 'Actual vs Predicted Incidents - Last 12 Months'
+                        },
+                        legend: {
+                            position: 'top'
                         }
                     },
                     scales: {

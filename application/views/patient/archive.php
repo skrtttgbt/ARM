@@ -1,8 +1,3 @@
-<?php 
-// Get CodeIgniter instance to access session
-$CI =& get_instance();
-$CI->load->library('session');
-?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -45,9 +40,9 @@ $CI->load->library('session');
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <!-- <a href="index.html">
+                        <a href="index.html">
                             <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
-                        </a> -->
+                        </a>
                     </div>
                     <!-- ============================================================== -->
                     <!-- End Logo -->
@@ -126,6 +121,7 @@ $CI->load->library('session');
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -139,7 +135,7 @@ $CI->load->library('session');
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -171,37 +167,8 @@ $CI->load->library('session');
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -294,12 +261,12 @@ $CI->load->library('session');
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Patient</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Patient Archive</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
                                     <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Account List</li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Archived Patients</li>
                                 </ol>
                             </nav>
                         </div>
@@ -322,19 +289,18 @@ $CI->load->library('session');
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
-                <?php 
-                // Get CodeIgniter instance to access session
-                $CI =& get_instance();
-                $CI->load->library('session');
-                if($CI->session->flashdata('message')): ?>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
                     <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $CI->session->flashdata('message'); ?>
+                        <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Patient</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Patient Navigation">
+                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Active Patients</a>
+                                    <a href="<?php echo base_url(); ?>patient/archive" class="btn btn-primary active">Archived Patients</a>
+                                </div>
+                                <h4 class="card-title">Archived Patients</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -348,89 +314,93 @@ $CI->load->library('session');
                                                 <th>Full Name</th>
                                                 <th>Gender</th>
                                                 <th>Age</th>
+                                                <th>Height</th>
+                                                <th>Weight</th>
                                                 <th>PhilHealth</th>
-                                                <th>Date Registed</th>
+                                                <th>Date Registered</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php
-                                            if($patients) {
-                                                foreach($patients as $patient) {
-                                                ?>
-                                                <tr>
-                                                    <td><?php echo ucwords($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></td>
-                                                    <td><?php echo ucwords($patient['gender']); ?></td>
-                                                    <td><?php echo (new DateTime($patient['birthday']))->diff(new DateTime())->y; ?> Yrs Old</td>
-                                                    <td>
-                                                        <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
-                                                             data-bs-toggle="modal" data-bs-target="#philhealth-<?php echo $patient['id']; ?>">
-                                                            <i class="fas fa-address-card"></i> INFO
-                                                        </button>
-                                                    </td>
-                                                    <td><?php echo $patient['created_at']; ?></td>
-                                                    <td>
-                                                        <div class="btn-group">
-                                                            <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
-                                                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                                <i class="icon-settings"></i>
-                                                            </button>
-                                                            <div class="dropdown-menu">
-                                                                <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reactivate-modal-<?php echo $patient['id']; ?>">Reactivate Account</a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-
-                                                <div id="reactivate-modal-<?php echo $patient['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
-                                                    aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Reactivate Account</h4>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                    aria-hidden="true"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <p>Reactivating this patient account.</p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-light"
-                                                                    data-bs-dismiss="modal">Close</button>
-                                                                <a class="btn btn-primary" href="<?php echo base_url() . "patient/action/activate/" . $patient['id']; ?>">Proceed</a>
-                                                            </div>
-                                                        </div><!-- /.modal-content -->
-                                                    </div><!-- /.modal-dialog -->
-                                                </div><!-- /.modal -->
-
-                                                <div id="philhealth-<?php echo $patient['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
-                                                    aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">PhilHealth Information</h4>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                    aria-hidden="true"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <small>Account Type</small>
-                                                                <p><?php echo $patient['philhealth_type'] . ($patient['philhealth_type'] == "Member" ? "" : " - " . $patient['philhealth_relationship']); ?></p>
-                                                                <small>Account Number</small>
-                                                                <p><?php echo $patient['philhealth_no']; ?></p>
-                                                                <small>Full Name</small>
-                                                                <p><?php echo ucwords($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-light"
-                                                                    data-bs-dismiss="modal">Close</button>
-                                                            </div>
-                                                        </div><!-- /.modal-content -->
-                                                    </div><!-- /.modal-dialog -->
-                                                </div><!-- /.modal -->
-                                                <?php
-                                                }
-                                            }
+                                        <?php 
+                                        if($patients) {
+                                            foreach($patients as $patient) {
                                             ?>
+                                            <tr>
+                                                <td><?php echo ucwords($patient['patient_first_name'] . " " . $patient['patient_last_name']); ?></td>
+                                                <td><?php echo ucwords($patient['gender']); ?></td>
+                                                <td><?php echo (new DateTime($patient['birthday']))->diff(new DateTime())->y; ?> Yrs Old</td>
+                                                <td><?php echo !empty($patient['height']) ? $patient['height'] . ' cm' : 'N/A'; ?></td>
+                                                <td><?php echo !empty($patient['weight']) ? $patient['weight'] . ' kg' : 'N/A'; ?></td>
+                                                <td>
+                                                    <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
+                                                         data-bs-toggle="modal" data-bs-target="#philhealth-<?php echo $patient['id']; ?>">
+                                                        <i class="fas fa-address-card"></i> INFO
+                                                    </button>
+                                                </td>
+                                                <td><?php echo $patient['created_at']; ?></td>
+                                                <td>
+                                                    <div class="btn-group">
+                                                        <button type="button" class="btn btn-secondary dropdown-toggle btn-sm"
+                                                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                            <i class="icon-settings"></i>
+                                                        </button>
+                                                        <div class="dropdown-menu">
+                                                            <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#reactivate-modal-<?php echo $patient['id']; ?>">Reactivate Account</a>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <div id="reactivate-modal-<?php echo $patient['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
+                                                aria-labelledby="myModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title" id="myModalLabel">Reactivate Account</h4>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-hidden="true"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Reactivating this patient account will restore it to the active patient list.</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light"
+                                                                data-bs-dismiss="modal">Close</button>
+                                                            <a class="btn btn-primary" href="<?php echo base_url() . "patient/action/activate/" . $patient['id']; ?>">Proceed</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div id="philhealth-<?php echo $patient['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
+                                                aria-labelledby="myModalLabel" aria-hidden="true">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h4 class="modal-title" id="myModalLabel">PhilHealth Information</h4>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                aria-hidden="true"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <small>Account Type</small>
+                                                            <p><?php echo $patient['philhealth_type'] . ($patient['philhealth_type'] == "Member" ? "" : " - " . $patient['philhealth_relationship']); ?></p>
+                                                            <small>Account Number</small>
+                                                            <p><?php echo $patient['philhealth_no']; ?></p>
+                                                            <small>Full Name</small>
+                                                            <p><?php echo ucwords($patient['philhealth_first_name'] . " " . $patient['philhealth_last_name']); ?></p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light"
+                                                                data-bs-dismiss="modal">Close</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <?php
+                                            }
+                                        }
+                                        ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -490,3 +460,4 @@ $CI->load->library('session');
 </body>
 
 </html>
+

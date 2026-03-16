@@ -1,69 +1,74 @@
+<?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Required meta tags -->
+<head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>empty</title>
-    <!-- plugins:css -->
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/vendors/feather/feather.css">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/vendors/ti-icons/css/themify-icons.css">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/vendors/css/vendor.bundle.base.css">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/vendors/font-awesome/css/font-awesome.min.css">
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/vendors/mdi/css/materialdesignicons.min.css">
-    <!-- endinject -->
-    <!-- Plugin css for this page -->
-    <!-- End plugin css for this page -->
-    <!-- inject:css -->
-    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/old/css/style.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PetVax Manager | Login</title>
+    <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #eef6f5 0%, #d9e9f2 100%);
+        }
+        .auth-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .auth-card {
+            width: 100%;
+            max-width: 420px;
+            border: 0;
+            border-radius: 18px;
+            box-shadow: 0 18px 45px rgba(27, 61, 89, 0.14);
+        }
+        .brand-tag {
+            color: #4f6d7a;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 12px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-wrapper">
+        <div class="card auth-card">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="brand-tag mb-2">PetVax Manager</div>
+                    <h2 class="mb-1">Sign in</h2>
+                    <p class="text-muted mb-0">Use your administrator account to continue.</p>
+                </div>
 
-  </head>
-  <body>
-    <div class="container-scroller">
-      <div class="container-fluid page-body-wrapper full-page-wrapper">
-        <div class="content-wrapper d-flex align-items-center auth px-0">
-          <div class="row w-100 mx-0">
-            <div class="col-lg-4 mx-auto">
-              <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                <h4>Hello! let's get started</h4>
-                <?php echo form_open('login', 'class="pt-3" id="loginform"'); ?>
-                
-                  <?php if(isset($login_error)): ?>
-                    <div class="alert alert-danger"><?php echo $login_error; ?></div>
-                  <?php endif; ?>
-                  <div class="form-group">
-                    <input type="text" name="email" class="form-control form-control-lg" id="exampleInputEmail1" placeholder="Email">
-                  </div>
-                  <div class="form-group">
-                    <input type="password" name="password" class="form-control form-control-lg" id="exampleInputPassword1" placeholder="Password">
-                  </div>
-                  <div class="my-2 d-flex justify-content-between align-items-center">
-                    <a href="<?php echo base_url(); ?>forgot_password" class="auth-link text-black">Forgot password?</a>
-                  </div>
-                  <div class="mt-3 d-grid gap-2">
-                    <button name="loginBtn" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn" type="submit">SIGN IN</button>
-                  </div>
-                 
+                <?php if (!empty($login_error)): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <?php echo $login_error; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php echo form_open(base_url() . 'login'); ?>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" name="email" id="email" class="form-control" value="<?php echo set_value('email'); ?>" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="password" class="form-label mb-0">Password</label>
+                            <a href="<?php echo base_url(); ?>forgot_password" class="small text-decoration-none">Forgot password?</a>
+                        </div>
+                        <input type="password" name="password" id="password" class="form-control" required>
+                    </div>
+
+                    <button type="submit" name="loginBtn" value="1" class="btn btn-primary w-100">Login</button>
                 </form>
-              </div>
             </div>
-          </div>
         </div>
-        <!-- content-wrapper ends -->
-      </div>
-      <!-- page-body-wrapper ends -->
     </div>
-    <!-- container-scroller -->
-    <!-- plugins:js -->
-    <script src="<?php echo base_url(); ?>assets/old/vendors/js/vendor.bundle.base.js"></script>
-    <!-- endinject -->
-    <!-- Plugin js for this page -->
-    <!-- End plugin js for this page -->
-    <!-- inject:js -->
-    <script src="<?php echo base_url(); ?>assets/old/js/off-canvas.js"></script>
-    <script src="<?php echo base_url(); ?>assets/old/js/template.js"></script>
-    <script src="<?php echo base_url(); ?>assets/old/js/settings.js"></script>
-    <script src="<?php echo base_url(); ?>assets/old/js/todolist.js"></script>
-    <!-- endinject -->
-  </body>
+</body>
 </html>

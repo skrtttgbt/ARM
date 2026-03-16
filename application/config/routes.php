@@ -33,7 +33,7 @@ $route['patient/action/activate/(:any)'] = 'PatientController/account_activate/$
 
 
 $route['vaccine'] = 'VaccineController/index';
-$route['vaccine/create'] = 'VaccineController/create';
+$route['vaccine/create'] = 'VaccineController/index';
 $route['vaccine/archive'] = 'VaccineController/archive';
 $route['vaccine/view/(:any)'] = 'VaccineController/view/$1';
 $route['vaccine/analyze/(:any)'] = 'VaccineController/analyze/$1';

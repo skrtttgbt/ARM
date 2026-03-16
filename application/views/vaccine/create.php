@@ -1,3 +1,11 @@
+<?php 
+// Get CodeIgniter instance to access session
+$CI =& get_instance();
+$CI->load->library('session');
+
+?>
+
+
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 
@@ -11,15 +19,6 @@
 </head>
 
 <body>
-    <!-- ============================================================== -->
-    <!-- Preloader - style you can find in spinners.css -->
-    <!-- ============================================================== -->
-    <div class="preloader">
-        <div class="lds-ripple">
-            <div class="lds-pos"></div>
-            <div class="lds-pos"></div>
-        </div>
-    </div>
     <!-- ============================================================== -->
     <!-- Main wrapper - style you can find in pages.scss -->
     <!-- ============================================================== -->
@@ -164,37 +163,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -291,7 +261,7 @@
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
                                     <li class="breadcrumb-item text-muted active" aria-current="page">Create Vaccine</li>
                                 </ol>
                             </nav>
@@ -315,15 +285,21 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-
                 <?php 
                 // Get CodeIgniter instance to access session
                 $CI =& get_instance();
                 $CI->load->library('session');
-                if($CI->session->flashdata('barcode_error')): ?>
-                    <div class="alert alert-danger" role="alert">
+                if($CI->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
                         <i class="dripicons-checkmark me-2"></i> 
-                        <?php echo $CI->session->flashdata('barcode_error'); ?>
+                        <?php echo $CI->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if($this->session->flashdata('barcode_error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-warning me-2"></i>
+                        <?php echo $this->session->flashdata('barcode_error'); ?>
                     </div>
                 <?php endif; ?>
 
@@ -332,111 +308,100 @@
                     <div class="col-lg-12 ">
                         <div class="card">
                             <div class="card-body">
+                                <?php $barcode = $this->session->userdata('vaccine_barcode'); ?>
+
+                                <div class="mb-4">
+                                    <h5 class="card-title">Barcode</h5>
+                                    <?php if (!$barcode): ?>
+                                        <?php echo form_open(base_url() . 'vaccine/create', 'form-horizontal'); ?>
+                                            <div class="row">
+                                                <div class="form-group col-md-9">
+                                                    <label for="barcodeInput" class="col-form-label">Scan or Enter Barcode</label>
+                                                    <input name="barcode" type="text" class="form-control" id="barcodeInput" placeholder="Enter barcode">
+                                                </div>
+                                                <div class="form-group col-md-3 d-flex align-items-end">
+                                                    <button type="submit" name="checkBarcode" value="1" class="btn btn-primary w-100">Check Barcode</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    <?php else: ?>
+                                        <?php echo form_open(base_url() . 'vaccine/create', 'form-horizontal'); ?>
+                                            <div class="row">
+                                                <div class="form-group col-md-9">
+                                                    <label class="col-form-label">Selected Barcode</label>
+                                                    <input type="text" class="form-control" value="<?php echo htmlspecialchars($barcode); ?>" disabled>
+                                                </div>
+                                                <div class="form-group col-md-3 d-flex align-items-end">
+                                                    <button type="submit" name="removeBarcode" value="1" class="btn btn-outline-danger w-100">Remove Barcode</button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+
                                 <?php echo form_open(base_url() . 'vaccine/create', 'form-horizontal'); ?>
-                                    
-                                    <div class="row">
-                                        <div class="form-group col-md-12">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Barcode (Scan the barcode)</label>
-                                            <input name="barcode" type="text" value="<?php echo ($CI->session->userdata('vaccine_barcode') ? $CI->session->userdata('vaccine_barcode') : "")?>" class="form-control" <?php echo ($CI->session->userdata('vaccine_barcode') ? "readonly" : "")?>>
-                                            <?php echo form_error('barcode', '<div class="invalid-feedback">', '</div>'); ?>  
-                                        </div>
-                                    </div>
-                                    
-                                    <?php 
-                                    // Get CodeIgniter instance to access session
-                                    $CI =& get_instance();
-                                    if ($CI->session->userdata('vaccine_barcode')) {
-                                    ?>
-                                    <div class="row">
-                                        <div class="form-group col-md-12 mt-3">
-                                            <button type="submit" name="removeBarcode" class="btn btn-primary">Reset</button>
-                                        </div>
-                                    </div>
-                                    <?php 
-                                    } else {
-                                    ?>
-                                    <div class="row">
-                                        <div class="form-group col-md-12 mt-3">
-                                            <button type="submit" name="checkBarcode" class="btn btn-primary">Submit</button>
-                                        </div>
-                                    </div>
-                                    <?php 
-                                    }
-                                    ?>
-                                    
-
-
-                                    <?php 
-                                    // Get CodeIgniter instance to access session
-                                    $CI =& get_instance();
-                                    if ($CI->session->userdata('vaccine_barcode')) {
-                                    ?>
-                                    <hr>
                                     <input type="hidden" name="user_id" value="<?php echo $user_info['id']; ?>">
+                                    <input type="hidden" name="barcode" value="<?php echo htmlspecialchars((string) $barcode); ?>">
 
                                     <div class="row">
                                         <div class="form-group col-md-12">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Type</label>
-                                            <select class="form-select" name="type" id="">
-                                                <option value="Dog">Dog</option>
-                                                <option value="Cat">Cat</option>
+                                            <label for="vaccineType" class="col-form-label">Vaccine Type</label>
+                                            <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type" id="vaccineType">
+                                                <option value="Dog" <?php echo set_select('type', 'Dog', TRUE); ?>>Dog</option>
+                                                <option value="Cat" <?php echo set_select('type', 'Cat'); ?>>Cat</option>
                                             </select>
-                                            <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Name</label>
-                                            <input name="name" type="text" class="form-control <?php echo (form_error('name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
-                                            <?php echo form_error('name', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <label for="vaccineName" class="col-form-label">Vaccine Name</label>
+                                            <input name="name" type="text" value="<?php echo set_value('name'); ?>" class="form-control <?php echo (form_error('name') ? "is-invalid" : ""); ?>" id="vaccineName">
+                                            <?php echo form_error('name', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Description</label>
-                                            <textarea name="description" type="text" class="form-control <?php echo (form_error('description') ? "is-invalid" : ""); ?>"></textarea>
-                                            <?php echo form_error('description', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <label for="vaccineDescription" class="col-form-label">Vaccine Description</label>
+                                            <textarea name="description" class="form-control <?php echo (form_error('description') ? "is-invalid" : ""); ?>" id="vaccineDescription"><?php echo set_value('description'); ?></textarea>
+                                            <?php echo form_error('description', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Capacity</label>
-                                            <input name="capacity" type="number" class="form-control <?php echo (form_error('capacity') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
-                                            <?php echo form_error('capacity', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <label for="vaccineCapacity" class="col-form-label">Capacity</label>
+                                            <input name="capacity" type="number" value="<?php echo set_value('capacity'); ?>" class="form-control <?php echo (form_error('capacity') ? "is-invalid" : ""); ?>" id="vaccineCapacity">
+                                            <?php echo form_error('capacity', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
 
-                                        
                                         <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Dose Amount</label>
-                                            <select class="form-select" name="amount">
-                                                <option value="1">1</option>
-                                                <option value="2">2</option>
-                                                <option value="3">3</option>
-                                                <option value="4">4</option>
-                                                <option value="5">5</option>
-                                                <option value="6">6</option>
+                                            <label for="doseAmount" class="col-form-label">Dose Amount</label>
+                                            <select class="form-select <?php echo (form_error('amount') ? "is-invalid" : ""); ?>" name="amount" id="doseAmount">
+                                                <option value="1" <?php echo set_select('amount', '1', TRUE); ?>>1</option>
+                                                <option value="2" <?php echo set_select('amount', '2'); ?>>2</option>
+                                                <option value="3" <?php echo set_select('amount', '3'); ?>>3</option>
+                                                <option value="4" <?php echo set_select('amount', '4'); ?>>4</option>
+                                                <option value="5" <?php echo set_select('amount', '5'); ?>>5</option>
                                             </select>
-                                            <?php echo form_error('amount', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('amount', '<div class="invalid-feedback d-block">', '</div>'); ?>
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-3">
-                                            <button type="submit" class="btn btn-primary">Submit</button>
+                                            <button type="submit" class="btn btn-primary" <?php echo !$barcode ? 'disabled' : ''; ?>>Create Vaccine</button>
+                                            <?php if (!$barcode): ?>
+                                                <small class="text-muted ms-2">Check a barcode first before creating a vaccine.</small>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
-                                    <?php
-                                    }
-                                    ?>
                                 </form>
-
                             </div>
                         </div>
                     </div>
-                    <!-- column -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -480,11 +445,7 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
-    <script>
-        $(function () {
-            $('[data-plugin="knob"]').knob();
-        });
-    </script>
 </body>
 
 </html>
+

@@ -8,6 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -38,9 +40,9 @@
                     <!-- ============================================================== -->
                     <div class="navbar-brand">
                         <!-- Logo icon -->
-                        <!-- <a href="index.html">
+                        <a href="index.html">
                             <img src="../assets/images/freedashDark.svg" alt="" class="img-fluid">
-                        </a> -->
+                        </a>
                     </div>
                     <!-- ============================================================== -->
                     <!-- End Logo -->
@@ -119,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -132,7 +135,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -164,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -315,6 +289,14 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $this->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="container-fluid">
                 <h4 class="card-title">Create Patient</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
@@ -327,13 +309,13 @@
                                     <div class="row">
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">First Name</label>
-                                            <input name="first_name" type="text" class="form-control <?php echo (form_error('first_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="first_name" type="text" class="form-control <?php echo (form_error('first_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('first_name'); ?>">
                                             <?php echo form_error('first_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Last Name</label>
-                                            <input name="last_name" type="text" class="form-control <?php echo (form_error('last_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="last_name" type="text" class="form-control <?php echo (form_error('last_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('last_name'); ?>">
                                             <?php echo form_error('last_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -341,18 +323,18 @@
                                     <div class="row">
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Gender</label>
-                                            <select name="gender" class="form-select" >
-                                                <option value="" disabled selected>Select Gender</option>
-                                                <option value="male"><i class="fas fa-mars"></i> MALE</option>
-                                                <option value="female"><i class="fas fa-venus"></i> FEMALE</option>
-                                                <option value="other"><i class="fas fa-genderless"></i> PREFER NOT TO SAY</option>
+                                            <select name="gender" class="form-select <?php echo (form_error('gender') ? "is-invalid" : ""); ?>">
+                                                <option value="" disabled <?php echo set_select('gender', '', TRUE); ?>>Select Gender</option>
+                                                <option value="male" <?php echo set_select('gender', 'male'); ?>>MALE</option>
+                                                <option value="female" <?php echo set_select('gender', 'female'); ?>>FEMALE</option>
+                                                <option value="other" <?php echo set_select('gender', 'other'); ?>>PREFER NOT TO SAY</option>
                                             </select>
-                                            <?php echo form_error('gender', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('gender', '<div class="invalid-feedback d-block">', '</div>'); ?>  
                                         </div>
 
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Birthday</label>
-                                            <input name="birthday" type="date" class="form-control <?php echo (form_error('birthday') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="birthday" type="date" max="<?php echo date('Y-m-d', strtotime('-18 years')); ?>" class="form-control <?php echo (form_error('birthday') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('birthday'); ?>">
                                             <?php echo form_error('birthday', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -360,13 +342,13 @@
                                     <div class="row">
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Height (cm)</label>
-                                            <input name="height" type="text" class="form-control <?php echo (form_error('height') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter height in cm">
+                                            <input name="height" type="text" class="form-control <?php echo (form_error('height') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter height in cm" value="<?php echo set_value('height'); ?>">
                                             <?php echo form_error('height', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Weight (kg)</label>
-                                            <input name="weight" type="text" class="form-control <?php echo (form_error('weight') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter weight in kg">
+                                            <input name="weight" type="text" class="form-control <?php echo (form_error('weight') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" placeholder="Enter weight in kg" value="<?php echo set_value('weight'); ?>">
                                             <?php echo form_error('weight', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -376,16 +358,16 @@
                                             <label for="inputHorizontalSuccess" class="col-form-label">Mobile Number</label>
                                             <div class="input-group">
                                                 <span class="input-group-text">+639</span>
-                                                <input name="mobile" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                                <input name="mobile" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{9}" placeholder="XXXXXXXXX" class="form-control <?php echo (form_error('mobile') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('mobile'); ?>">
                                             </div>
-                                            <?php echo form_error('mobile', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('mobile', '<div class="invalid-feedback d-block">', '</div>'); ?>  
                                         </div>
                                     </div>
 
                                     <div class="row">
                                         <div class="form-group col-md-12 mt-2">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Address</label>
-                                            <input name="address" type="text" class="form-control <?php echo (form_error('address') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <input name="address" type="text" class="form-control <?php echo (form_error('address') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('address'); ?>">
                                             <?php echo form_error('address', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -397,66 +379,45 @@
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Account Type</label>
                                             <select name="type" class="form-select">
-                                                <option value="Member" <?= set_select('type', 'Member'); ?>>Member</option>
-                                                <option value="Dependent" <?= set_select('type', 'Dependent'); ?>>Dependent</option>
+                                                <option value="Member" <?php echo set_select('type', 'Member', TRUE); ?>>Member</option>
+                                                <option value="Dependent" <?php echo set_select('type', 'Dependent'); ?>>Dependent</option>
                                             </select>
-                                            <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>  
                                         </div>
 
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Relationship</label>
                                             <select name="relationship" class="form-select <?php echo (form_error('relationship') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
                                                 <option value="">Select Relationship</option>
-                                                <option value="Spouse">Spouse</option>
-                                                <option value="Child">Child</option>
-                                                <option value="Parent">Parent</option>
-                                                <option value="Grandparent">Grandparent</option>
-                                                <option value="Grandchild">Grandchild</option>
-                                                <option value="Sibling">Sibling</option>
-                                                <option value="In-Law">In-Law</option>
-                                                <option value="Other">Other</option>
+                                                <option value="Spouse" <?php echo set_select('relationship', 'Spouse'); ?>>Spouse</option>
+                                                <option value="Child" <?php echo set_select('relationship', 'Child'); ?>>Child</option>
+                                                <option value="Parent" <?php echo set_select('relationship', 'Parent'); ?>>Parent</option>
+                                                <option value="Grandparent" <?php echo set_select('relationship', 'Grandparent'); ?>>Grandparent</option>
+                                                <option value="Grandchild" <?php echo set_select('relationship', 'Grandchild'); ?>>Grandchild</option>
+                                                <option value="Sibling" <?php echo set_select('relationship', 'Sibling'); ?>>Sibling</option>
+                                                <option value="In-Law" <?php echo set_select('relationship', 'In-Law'); ?>>In-Law</option>
+                                                <option value="Other" <?php echo set_select('relationship', 'Other'); ?>>Other</option>
                                             </select>
-                                            <?php echo form_error('relationship', '<div class="invalid-feedback">', '</div>'); ?>  
+                                            <?php echo form_error('relationship', '<div class="invalid-feedback d-block">', '</div>'); ?>  
                                         </div>
                                     </div>
-                                    <script>
-                                        document.addEventListener("DOMContentLoaded", function () {
-                                        const typeSelect = document.querySelector('select[name="type"]');
-                                        const relationshipSelect = document.querySelector('select[name="relationship"]');
-
-                                        function toggleRelationship() {
-                                            if (typeSelect.value === "Member") {
-                                                relationshipSelect.value = "";
-                                                relationshipSelect.disabled = true;
-                                            } else {
-                                                relationshipSelect.disabled = false;
-                                            }
-                                        }
-
-                                        // run on page load + when selection changes
-                                        toggleRelationship();
-                                        typeSelect.addEventListener("change", toggleRelationship);
-                                        });
-                                    </script>
 
                                     <div class="row">
-                                        <div class="form-group col-md-12 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">PhilHealth Account Number</label>
-                                            <input name="account_number" type="number" class="form-control <?php echo (form_error('account_number') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                        <div class="form-group col-md-4 mt-2">
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Account Number</label>
+                                            <input name="account_number" type="text" class="form-control <?php echo (form_error('account_number') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('account_number'); ?>">
                                             <?php echo form_error('account_number', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
-                                    </div>
 
-                                    <div class="row">
-                                        <div class="form-group col-md-6">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">PhilHealth Member First Name</label>
-                                            <input name="account_first_name" type="text" class="form-control <?php echo (form_error('account_first_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                        <div class="form-group col-md-4 mt-2">
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Member First Name</label>
+                                            <input name="account_first_name" type="text" class="form-control <?php echo (form_error('account_first_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('account_first_name'); ?>">
                                             <?php echo form_error('account_first_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
-                                        <div class="form-group col-md-6">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">PhilHealth Member Last Name</label>
-                                            <input name="account_last_name" type="text" class="form-control <?php echo (form_error('account_last_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                        <div class="form-group col-md-4 mt-2">
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Member Last Name</label>
+                                            <input name="account_last_name" type="text" class="form-control <?php echo (form_error('account_last_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('account_last_name'); ?>">
                                             <?php echo form_error('account_last_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -468,11 +429,9 @@
                                     </div>
 
                                 </form>
-
                             </div>
                         </div>
                     </div>
-                    <!-- column -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -516,10 +475,11 @@
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
+
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $(function () {
-            $('[data-plugin="knob"]').knob();
-        });
+        $('#default_order').DataTable();
     </script>
 </body>
 

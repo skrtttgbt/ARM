@@ -7,8 +7,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Transaction Logs</title>
     <link href="<?php echo base_url(); ?>assets/dist/css/style.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/dataTables.bootstrap4.css">
+    <link rel="stylesheet" href="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/css/responsive.dataTables.min.css">
 </head>
 
 <body>
@@ -68,6 +69,9 @@
                     <!-- ============================================================== -->
                     <ul class="navbar-nav float-end">
                         <!-- ============================================================== -->
+                        <!-- Search -->
+                        <!-- ============================================================== -->
+                        <!-- ============================================================== -->
                         <!-- User profile and search -->
                         <!-- ============================================================== -->
                         <li class="nav-item dropdown">
@@ -117,6 +121,7 @@
                                 <span class="hide-menu">Dashboard</span>
                             </a>
                         </li>
+
                         <li class="sidebar-item"> 
                             <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="fas fa-clock"></i>
@@ -130,7 +135,7 @@
                                 </li>
                                 <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>schedule/future" class="sidebar-link">
-                                        <span class="hide-menu"> Up Comming</span>
+                                        <span class="hide-menu"> Upcoming</span>
                                     </a>
                                 </li>
                             </ul>
@@ -162,37 +167,8 @@
                                     </a>
                                 </li>
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vaccine/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
                                     <a href="<?php echo base_url(); ?>vaccine/archive" class="sidebar-link">
                                         <span class="hide-menu"> Archive</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
-                        <li class="sidebar-item"> 
-                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
-                                <i class="fas fa-vials"></i>
-                                <span class="hide-menu">Vial </span>
-                            </a>
-                            <ul aria-expanded="false" class="collapse  first-level base-level-line">
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial" class="sidebar-link">
-                                        <span class="hide-menu"> List</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/create" class="sidebar-link">
-                                        <span class="hide-menu"> Create</span>
-                                    </a>
-                                </li>
-                                <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>vial/verify" class="sidebar-link">
-                                        <span class="hide-menu"> Verify</span>
                                     </a>
                                 </li>
                             </ul>
@@ -254,13 +230,13 @@
                         <li class="list-divider"></li>
                         <li class="nav-small-cap"><span class="hide-menu">Audit Trail</span></li>
                         <li class="sidebar-item"> 
-                            <a class="sidebar-link active" href="javascript:void(0)" aria-expanded="false">
+                            <a class="sidebar-link has-arrow" href="javascript:void(0)" aria-expanded="false">
                                 <i class="far fa-chart-bar"></i>
                                 <span class="hide-menu">Logs </span>
                             </a>
                             <ul aria-expanded="false" class="collapse  first-level base-level-line">
                                 <li class="sidebar-item">
-                                    <a href="<?php echo base_url(); ?>log/transaction" class="sidebar-link active">
+                                    <a href="<?php echo base_url(); ?>log/transaction" class="sidebar-link">
                                         <span class="hide-menu"> Transactions</span>
                                     </a>
                                 </li>
@@ -285,16 +261,25 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Transaction Logs</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Incident</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Transaction Logs</li>
+                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Incident</li>
                                 </ol>
                             </nav>
                         </div>
                     </div>
+                    <!-- <div class="col-5 align-self-center">
+                        <div class="customize-input float-end">
+                            <select class="custom-select custom-select-set form-control bg-white border-0 custom-shadow custom-radius">
+                                <option selected>Aug 23</option>
+                                <option value="1">July 23</option>
+                                <option value="2">Jun 23</option>
+                            </select>
+                        </div>
+                    </div> -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -304,146 +289,99 @@
             <!-- Container fluid  -->
             <!-- ============================================================== -->
             <div class="container-fluid">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="card-title">Transaction Logs</h4>
-                                
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h5>Completed Schedules</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Patient</th>
-                                                        <th>Animal Type</th>
-                                                        <th>Schedule Date</th>
-                                                        <th>Completed By</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if(!empty($completed_schedules)): ?>
-                                                    <?php foreach($completed_schedules as $schedule): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($schedule['patient_first_name'] . ' ' . $schedule['patient_last_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($schedule['animal_type']); ?></td>
-                                                        <td><?php echo date('M j, Y', strtotime($schedule['schedule'])); ?></td>
-                                                        <td><?php echo htmlspecialchars($schedule['user_fname'] . ' ' . $schedule['user_lname']); ?></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                    <tr>
-                                                        <td colspan="4">No completed schedules found</td>
-                                                    </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <h5>Recent Incidents</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Patient</th>
-                                                        <th>Animal Type</th>
-                                                        <th>Date</th>
-                                                        <th>Created By</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if(!empty($recent_incidents)): ?>
-                                                    <?php foreach($recent_incidents as $incident): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($incident['patient_first_name'] . ' ' . $incident['patient_last_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($incident['animal_type']); ?></td>
-                                                        <td><?php echo $incident['created_at']; ?></td>
-                                                        <td><?php echo htmlspecialchars($incident['user_fname'] . ' ' . $incident['user_lname']); ?></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                    <tr>
-                                                        <td colspan="4">No recent incidents found</td>
-                                                    </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                <?php if(isset($this->session) && $this->session->flashdata('message')): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="dripicons-checkmark me-2"></i> 
+                        <?php echo $this->session->flashdata('message'); ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
+                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-primary active">Incident List</a>
+                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Select Patient to Create Incident</a>
                                 </div>
+                                <h4 class="card-title">Incidents</h4>
+                <div class="row">
+                    <div class="col-lg-12 ">
+                        <div class="card">
+
+                            <div class="card-body">
                                 
-                                <div class="row mt-4">
-                                    <div class="col-md-6">
-                                        <h5>Recently Registered Patients</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Patient Name</th>
-                                                        <th>Mobile</th>
-                                                        <th>Registered Date</th>
-                                                        <th>Added By</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if(!empty($recent_patients)): ?>
-                                                    <?php foreach($recent_patients as $patient): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($patient['patient_first_name'] . ' ' . $patient['patient_last_name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($patient['mobile']); ?></td>
-                                                        <td><?php echo $patient['created_at']; ?></td>
-                                                        <td><?php echo htmlspecialchars($patient['user_fname'] . ' ' . $patient['user_lname']); ?></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                    <tr>
-                                                        <td colspan="4">No recent patients found</td>
-                                                    </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <h5>Recent Vaccinations</h5>
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Vaccine</th>
-                                                        <th>Patient</th>
-                                                        <th>Schedule Date</th>
-                                                        <th>Status</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php if(!empty($recent_vaccinations)): ?>
-                                                    <?php foreach($recent_vaccinations as $vaccination): ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($vaccination['vaccine_type']); ?></td>
-                                                        <td><?php echo htmlspecialchars($vaccination['patient_first_name'] . ' ' . $vaccination['patient_last_name']); ?></td>
-                                                        <td><?php echo date('M j, Y', strtotime($vaccination['schedule'])); ?></td>
-                                                        <td><span class="badge bg-success">Completed</span></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                    <tr>
-                                                        <td colspan="4">No recent vaccinations found</td>
-                                                    </tr>
-                                                    <?php endif; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
+                                <div class="table-responsive">
+                                    <table id="default_order"class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient Name</th>
+                                                <th>Animal Type</th>
+                                                <th>Bite Date</th>
+                                                <th>Status</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <?php 
+                                        if(isset($incidents) && $incidents) {
+                                            foreach($incidents as $incident) {
+                                            
+                                            $patient = $this->patients->getPatient($incident['patient_id']);
+                                            ?>
+                                            <tr>
+                                                <td><?php echo $patient['patient_first_name'] . " " . $patient['patient_last_name']; ?></td>
+                                                <td><?php echo $incident['animal_type']; ?></td>
+                                                <td><?php echo $incident['bite_date']; ?></td>
+                                                <td>
+                                                <?php
+                                                $checkSchedule = $this->incidents->checkSchedule($incident['id']);
+                                                $checkCompletedSchedule = $this->incidents->countCompletedSchedule($incident['id']); 
+                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                ?>
+                                                
+                                                <button class="btn btn-success btn-sm">COMPLETE</button>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                <button class="btn btn-warning btn-sm" style="color:white">ON-GOING</button>
+                                                <?php 
+                                                }
+                                                ?>
+                                                
+                                                
+                                                </td>
+                                                <td>
+                                                <?php
+                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                ?>
+                                                <a class="btn btn-secondary btn-sm">Transaction Complete</a>
+                                                <?php
+                                                } else {
+
+                                                    if($checkSchedule) {
+                                                    ?>
+                                                        <button class="btn btn-secondary btn-sm">SCHEDULED</button>
+                                                    <?php 
+                                                    } else {
+                                                    ?>
+                                                        <a href="<?php echo base_url() . "incident/create_schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
+                                                    <?php  
+                                                    }
+
+                                                
+                                                }
+                                                ?>    
+                                                    
+                                                </td>
+                                            </tr>
+                                            <?php
+                                            }
+                                        }
+                                        ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
+                    <!-- column -->
                 </div>
             </div>
             <!-- ============================================================== -->
@@ -452,7 +390,7 @@
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Animal Rabies Management System Transaction Logs</a>.
+            <footer class="footer text-center text-muted"> Footer here</a>.
             </footer>
             <!-- ============================================================== -->
             <!-- End footer -->
@@ -465,11 +403,15 @@
     <!-- ============================================================== -->
     <!-- End Wrapper -->
     <!-- ============================================================== -->
+    <!-- End Wrapper -->
+    <!-- ============================================================== -->
     <!-- All Jquery -->
+    <!-- ============================================================== -->
     <script src="<?php echo base_url(); ?>assets/libs/jquery/dist/jquery.min.js"></script>
     <!-- Bootstrap tether Core JavaScript -->
     <script src="<?php echo base_url(); ?>assets/libs/popper.js/dist/umd/popper.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- apps -->
     <!-- apps -->
     <script src="<?php echo base_url(); ?>assets/dist/js/app-style-switcher.js"></script>
     <script src="<?php echo base_url(); ?>assets/dist/js/feather.min.js"></script>
@@ -482,6 +424,14 @@
     <script src="<?php echo base_url(); ?>assets/dist/js/sidebarmenu.js"></script>
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
+
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
+    <script>
+        $('#default_order').DataTable();
+    </script>
 </body>
 
 </html>
+
