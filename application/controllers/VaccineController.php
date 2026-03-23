@@ -132,13 +132,17 @@ class VaccineController extends CI_Controller {
     }
 
     public function retreive($id) {
+        return $this->retrieve($id);
+    }
+
+    public function retrieve($id) {
         // Check if user is logged in
         if (!$this->session->userdata('user_id')) {
             redirect('login');
             return;
         }
 
-        $this->vaccines->removeVaccine($id);
+        $this->vaccines->retreiveVaccine($id);
         $this->session->set_flashdata('message', 'Vaccine is retrieved.');
 		redirect('vaccine');
     }

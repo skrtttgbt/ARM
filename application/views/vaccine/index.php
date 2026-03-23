@@ -307,7 +307,11 @@ $CI->load->library('session');
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Vaccine - Archive</h4>
+                <div class="btn-group mb-3" role="group" aria-label="Vaccine Navigation">
+                    <a href="<?php echo base_url(); ?>vaccine" class="btn btn-primary active">Vaccine List</a>
+                    <a href="<?php echo base_url(); ?>vaccine/archive" class="btn btn-outline-primary">Archive</a>
+                </div>
+                <h4 class="card-title">Vaccine List</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
                         <div class="card">
@@ -338,7 +342,8 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
                                                     <td>
-                                                        <a class="btn btn-secondary dropdown-toggle btn-sm"  data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>"><i class="fas fa-trash-alt"></i></a>
+                                                        <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a>
+                                                        <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
                                                     </td>
                                                 </tr>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
@@ -346,17 +351,17 @@ $CI->load->library('session');
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Retreive Confirmation</h4>
+                                                                <h4 class="modal-title" id="myModalLabel">Archive Confirmation</h4>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                     aria-hidden="true"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <p>Are you sure wyou want to retrieve?</p>
+                                                                <p>Are you sure you want to archive this vaccine?</p>
                                                             </div>
                                                             <div class="modal-footer">
                                                                 <button type="button" class="btn btn-light"
                                                                     data-bs-dismiss="modal">Close</button>
-                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/retreive/" . $vaccine['id']; ?>">Proceed</a>
+                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/remove/" . $vaccine['id']; ?>">Proceed</a>
                                                             </div>
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->
@@ -424,4 +429,5 @@ $CI->load->library('session');
 </body>
 
 </html>
+
 

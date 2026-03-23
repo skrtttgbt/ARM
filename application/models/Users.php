@@ -85,6 +85,7 @@ class Users extends CI_Model {
         $data = array(
         'level' => 1,
         'status' => 0,
+        'deleted' => 0,
         'image' => "default.png",
         'first_name' => $this->input->post('first_name'),
         'last_name' => $this->input->post('last_name'),
@@ -123,6 +124,7 @@ class Users extends CI_Model {
     private function sendSmsMessage($mobile, $message)
     {
         if (empty($mobile)) {
+            log_message('error', 'SMS skipped: empty mobile number.');
             return false;
         }
 
@@ -138,10 +140,42 @@ class Users extends CI_Model {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
         $response = curl_exec($ch);
+        $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_error = curl_error($ch);
         curl_close($ch);
 
-        return $response !== false;
+        if ($response === false) {
+            log_message('error', 'SMS request failed for ' . $mobile . '. CURL error: ' . $curl_error);
+            return false;
+        }
+
+        $decoded = json_decode($response, true);
+
+        if ($http_code < 200 || $http_code >= 300) {
+            log_message('error', 'SMS request failed for ' . $mobile . '. HTTP ' . $http_code . '. Response: ' . $response);
+            return false;
+        }
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+            $response_text = json_encode($decoded);
+            $message_text = isset($decoded['message']) && is_string($decoded['message'])
+                ? $decoded['message']
+                : '';
+
+            if (
+                isset($decoded['success']) && !$decoded['success'] ||
+                isset($decoded['error']) ||
+                isset($decoded['errors']) ||
+                ($message_text !== '' && stripos($message_text, 'error') !== false)
+            ) {
+                log_message('error', 'SMS gateway rejected message for ' . $mobile . '. Response: ' . $response_text);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function sendEmailMessage($email, $subject, $message)
@@ -326,23 +360,10 @@ class Users extends CI_Model {
 
         $rand = rand(11111111,99999999);
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
         $message = sprintf("Your password is reset. Use the default password below.\n\nPassword:\n%s", $rand);
-            
-        $data2 = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $phone
-            ];
-            
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-        $response = curl_exec($ch);
-        curl_close($ch);
+        if (!$this->sendSmsMessage($phone, $message)) {
+            log_message('error', 'Admin reset SMS notification failed for: ' . $phone);
+        }
 
 
         $this->db->set('password', md5($rand));
@@ -362,23 +383,10 @@ class Users extends CI_Model {
 
         $rand = rand(11111111,99999999);
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
         $message = sprintf("Your account is suspended.");
-            
-        $data2 = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $phone
-            ];
-            
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-        $response = curl_exec($ch);
-        curl_close($ch);
+        if (!$this->sendSmsMessage($phone, $message)) {
+            log_message('error', 'Admin suspend SMS notification failed for: ' . $phone);
+        }
 
         $this->db->set('deleted', 1);
         $this->db->where('id', $id);
@@ -396,23 +404,10 @@ class Users extends CI_Model {
 
         $rand = rand(11111111,99999999);
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
         $message = sprintf("Your account is re-activated.");
-            
-        $data2 = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $phone
-            ];
-            
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-        $response = curl_exec($ch);
-        curl_close($ch);
+        if (!$this->sendSmsMessage($phone, $message)) {
+            log_message('error', 'Admin activate SMS notification failed for: ' . $phone);
+        }
 
         $this->db->set('deleted', 0);
         $this->db->where('id', $id);

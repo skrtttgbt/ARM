@@ -92,7 +92,7 @@ class AdminController extends CI_Controller {
         }
 
         $this->users->actionReset($id);
-        $this->session->set_flashdata('message', 'Admin password has been reset. The new password will be sent to the admin’s mobile number.');
+        $this->session->set_flashdata('message', 'Admin password has been reset. The new password will be sent to the admin\'s mobile number.');
 		redirect('admin');
 
     }
@@ -105,7 +105,7 @@ class AdminController extends CI_Controller {
         }
 
         $this->users->actionSuspend($id);
-        $this->session->set_flashdata('message', 'Admin account has been suspended. A notification has been sent to the admin’s mobile number.');
+        $this->session->set_flashdata('message', 'Admin account has been suspended. A notification has been sent to the admin\'s mobile number.');
 		redirect('admin');
 
     }
@@ -118,7 +118,7 @@ class AdminController extends CI_Controller {
         }
 
         $this->users->actionActivate($id);
-        $this->session->set_flashdata('message', 'Admin account has been reactivated. A notification has been sent to the admin’s mobile number.');
+        $this->session->set_flashdata('message', 'Admin account has been reactivated. A notification has been sent to the admin\'s mobile number.');
 		redirect('admin/archive');
 
     }
@@ -140,7 +140,7 @@ class AdminController extends CI_Controller {
 
     public function valid_ph_mobile($mobile) {
         if (!is_valid_ph_mobile($mobile)) {
-            $this->form_validation->set_message('valid_ph_mobile', 'The {field} must be a valid PH mobile number (e.g., +639XXXXXXXXX).');
+            $this->form_validation->set_message('valid_ph_mobile', 'The {field} must be a valid PH mobile number. You can enter +639XXXXXXXXX, 09XXXXXXXXX, or the last 9 digits only.');
             return FALSE;
         }
         return TRUE;

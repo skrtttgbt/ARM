@@ -1,4 +1,5 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
+<?php $CI =& get_instance(); ?>
 <!DOCTYPE html>
 <html dir="ltr" lang="en">
 <head>
@@ -16,9 +17,7 @@
             <nav class="navbar top-navbar navbar-expand-lg">
                 <div class="navbar-header" data-logobg="skin6">
                     <a class="nav-toggler waves-effect waves-light d-block d-lg-none" href="javascript:void(0)"><i class="ti-menu ti-close"></i></a>
-                    <div class="navbar-brand">
-                        <a href="<?php echo base_url(); ?>dashboard"><img src="<?php echo base_url(); ?>assets/images/freedashDark.svg" alt="" class="img-fluid"></a>
-                    </div>
+                    <div class="navbar-brand"></div>
                     <a class="topbartoggler d-block d-lg-none waves-effect waves-light" href="javascript:void(0)" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"><i class="ti-more"></i></a>
                 </div>
                 <div class="navbar-collapse collapse" id="navbarSupportedContent">
@@ -66,7 +65,7 @@
         <div class="page-wrapper">
             <div class="page-breadcrumb"><div class="row"><div class="col-7 align-self-center"><h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Administrator</h4><div class="d-flex align-items-center"><nav aria-label="breadcrumb"><ol class="breadcrumb m-0 p-0"><li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li><li class="breadcrumb-item text-muted active" aria-current="page">Administrator List</li></ol></nav></div></div></div></div>
             <div class="container-fluid">
-                <?php if($this->session->flashdata('message')): ?><div class="alert alert-success" role="alert"><?php echo $this->session->flashdata('message'); ?></div><?php endif; ?>
+                <?php if(isset($CI->session) && $CI->session->flashdata('message')): ?><div class="alert alert-success" role="alert"><?php echo $CI->session->flashdata('message'); ?></div><?php endif; ?>
                 <div class="btn-group mb-3" role="group"><a href="<?php echo base_url(); ?>admin" class="btn btn-primary active">Active Administrators</a><a href="<?php echo base_url(); ?>admin/archive" class="btn btn-outline-primary">Archived Administrators</a></div>
                 <div class="card"><div class="card-body"><div class="table-responsive"><table id="default_order" class="table border table-striped table-bordered text-nowrap" style="width:100%"><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Date Registered</th><th>Action</th></tr></thead><tbody><?php if($admins) { foreach($admins as $admin) { ?><tr><td><?php echo ucwords($admin['first_name'] . ' ' . $admin['last_name']); ?></td><td><?php echo $admin['email']; ?></td><td><?php echo $admin['mobile']; ?></td><td><?php echo ((int)$admin['status'] === 1) ? 'Active' : 'Pending'; ?></td><td><?php echo $admin['created_at']; ?></td><td><a href="<?php echo base_url() . 'admin/action/reset/' . $admin['id']; ?>" class="btn btn-warning btn-sm">Reset</a> <a href="<?php echo base_url() . 'admin/action/suspend/' . $admin['id']; ?>" class="btn btn-danger btn-sm">Suspend</a></td></tr><?php } } else { ?><tr><td colspan="6" class="text-center">No administrators found.</td></tr><?php } ?></tbody></table></div></div></div>
             </div>
@@ -76,5 +75,18 @@
     <script src="<?php echo base_url(); ?>assets/libs/jquery/dist/jquery.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/libs/popper.js/dist/umd/popper.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/dist/js/app-style-switcher.js"></script>
+    <script src="<?php echo base_url(); ?>assets/dist/js/feather.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/libs/perfect-scrollbar/dist/perfect-scrollbar.jquery.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/sparkline/sparkline.js"></script>
+    <script src="<?php echo base_url(); ?>assets/dist/js/sidebarmenu.js"></script>
+    <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
+    <script>
+        $('#default_order').DataTable();
+    </script>
 </body>
 </html>
+
+
