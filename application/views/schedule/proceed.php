@@ -295,6 +295,18 @@
                         <?php echo $this->session->flashdata('message'); ?>
                     </div>
                 <?php endif; ?>
+                <?php if(isset($this->session) && $this->session->flashdata('barcode_error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-warning me-2"></i>
+                        <?php echo $this->session->flashdata('barcode_error'); ?>
+                    </div>
+                <?php endif; ?>
+                <?php if(isset($this->session) && $this->session->flashdata('error')): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="dripicons-warning me-2"></i>
+                        <?php echo $this->session->flashdata('error'); ?>
+                    </div>
+                <?php endif; ?>
 
                 <div class="btn-group mb-3" role="group" aria-label="Schedule Navigation">
                     <a href="<?php echo base_url(); ?>schedule" class="btn btn-outline-primary">Back to Schedule</a>
@@ -332,24 +344,15 @@
                                         </table>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="card mb-3">
-                                            <div class="card-body">
-                                                <h5 class="card-title">Send Notification</h5>
-                                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal'); ?>
-                                                    <input type="hidden" name="mobile" value="<?php echo htmlspecialchars($patient['mobile']); ?>">
-                                                    <button type="submit" name="sendNotif" value="1" class="btn btn-primary">Send SMS Notification</button>
-                                                </form>
-                                            </div>
-                                        </div>
                                         <div class="card">
                                             <div class="card-body">
                                                 <h5 class="card-title">Check Barcode</h5>
-                                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal'); ?>
+                                                <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'form-horizontal" id="barcodeLookupForm"'); ?>
                                                     <div class="form-group">
-                                                        <label for="barcodeInput" class="col-form-label">Vial Barcode</label>
-                                                        <input type="text" name="barcode" id="barcodeInput" class="form-control" placeholder="Enter barcode">
+                                                        <label for="barcodeInput" class="col-form-label">Barcode</label>
+                                                        <input type="text" name="barcode" id="barcodeInput" class="form-control" placeholder="Enter barcode" autocomplete="off">
                                                     </div>
-                                                    <button type="submit" name="checkBarcode" value="1" class="btn btn-success mt-3">Submit Barcode</button>
+                                                    <button type="button" id="barcodeLookupButton" class="btn btn-success mt-3">Submit Barcode</button>
                                                 </form>
                                             </div>
                                         </div>
@@ -407,7 +410,155 @@
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
         $('#default_order').DataTable();
+
+        $(function () {
+            var barcodeInput = document.getElementById('barcodeInput');
+            var barcodeButton = document.getElementById('barcodeLookupButton');
+            var modalElement = document.getElementById('vaccineConfirmModal');
+            var vaccineModal = modalElement ? new bootstrap.Modal(modalElement) : null;
+            var proceedButton = document.getElementById('proceedTransactionButton');
+            var proceedBarcode = document.getElementById('proceedBarcode');
+            var modalMessage = document.getElementById('barcodeLookupMessage');
+
+            function setModalRow(id, value) {
+                var node = document.getElementById(id);
+                if (node) {
+                    node.textContent = value || '-';
+                }
+            }
+
+            function showLookupError(message) {
+                if (modalMessage) {
+                    modalMessage.textContent = message;
+                    modalMessage.className = 'alert alert-danger';
+                    modalMessage.style.display = 'block';
+                }
+                if (proceedButton) {
+                    proceedButton.disabled = true;
+                }
+                if (vaccineModal) {
+                    vaccineModal.show();
+                }
+            }
+
+            function populateModal(data) {
+                setModalRow('modalBarcode', data.barcode);
+                setModalRow('modalVaccineName', data.vaccine.name);
+                setModalRow('modalVaccineType', data.vaccine.type);
+                setModalRow('modalVaccineCapacity', data.vaccine.capacity);
+                setModalRow('modalVaccineAmount', data.vaccine.amount);
+                setModalRow('modalVaccineQuantity', data.vaccine.quantity);
+
+                if (modalMessage) {
+                    if (data.message) {
+                        modalMessage.textContent = data.message;
+                        modalMessage.className = data.can_proceed ? 'alert alert-info' : 'alert alert-warning';
+                        modalMessage.style.display = 'block';
+                    } else {
+                        modalMessage.style.display = 'none';
+                    }
+                }
+
+                if (proceedBarcode) {
+                    proceedBarcode.value = data.barcode;
+                }
+
+                if (proceedButton) {
+                    proceedButton.disabled = !data.can_proceed;
+                }
+            }
+
+            function lookupBarcode() {
+                var barcode = barcodeInput ? barcodeInput.value.trim() : '';
+
+                if (!barcode) {
+                    showLookupError('Barcode is empty.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '<?php echo base_url() . "schedule/barcode_details/" . $schedule["id"]; ?>',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { barcode: barcode }
+                }).done(function (response) {
+                    if (!response.success) {
+                        showLookupError(response.message || 'Unable to load vaccine details.');
+                        return;
+                    }
+
+                    populateModal(response);
+                    if (vaccineModal) {
+                        vaccineModal.show();
+                    }
+                }).fail(function (xhr) {
+                    var response = xhr.responseJSON || {};
+                    showLookupError(response.message || 'Unable to load vaccine details.');
+                });
+            }
+
+            if (barcodeInput) {
+                barcodeInput.focus();
+                barcodeInput.addEventListener('keydown', function (event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        lookupBarcode();
+                    }
+                });
+            }
+
+            if (barcodeButton) {
+                barcodeButton.addEventListener('click', lookupBarcode);
+            }
+        });
     </script>
+
+    <div class="modal fade" id="vaccineConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Vaccine Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="barcodeLookupMessage" class="alert alert-info" style="display:none;"></div>
+                    <table class="table table-bordered mb-0">
+                        <tr>
+                            <th>Barcode</th>
+                            <td id="modalBarcode">-</td>
+                        </tr>
+                        <tr>
+                            <th>Vaccine Name</th>
+                            <td id="modalVaccineName">-</td>
+                        </tr>
+                        <tr>
+                            <th>Type</th>
+                            <td id="modalVaccineType">-</td>
+                        </tr>
+                        <tr>
+                            <th>Capacity</th>
+                            <td id="modalVaccineCapacity">-</td>
+                        </tr>
+                        <tr>
+                            <th>Dose Qty</th>
+                            <td id="modalVaccineAmount">-</td>
+                        </tr>
+                        <tr>
+                            <th>Available Quantity</th>
+                            <td id="modalVaccineQuantity">-</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <?php echo form_open(base_url() . 'schedule/proceed/' . $schedule['id'], 'class="d-inline"'); ?>
+                        <input type="hidden" name="barcode" id="proceedBarcode" value="">
+                        <button type="submit" name="proceedTransaction" value="1" id="proceedTransactionButton" class="btn btn-primary">Proceed</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

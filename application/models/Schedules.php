@@ -60,4 +60,22 @@ class Schedules extends CI_Model {
 
     }
 
+    public function updateScheduleDoneByVialId($id, $vial_id)
+    {
+        $this->db->set('vial_id', $vial_id);
+        $this->db->set('status', 1);
+        $this->db->where('id', $id);
+
+        return $this->db->update('schedules');
+    }
+
+    public function updateScheduleOngoingByVialId($id, $vial_id)
+    {
+        $this->db->set('vial_id', $vial_id);
+        $this->db->set('status', 2);
+        $this->db->where('id', $id);
+
+        return $this->db->update('schedules');
+    }
+
 }

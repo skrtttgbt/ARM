@@ -327,6 +327,7 @@ $CI->load->library('session');
                                                 <th>Type</th>
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
+                                                <th>Quantity</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -341,9 +342,10 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['type'];?></td>
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
+                                                    <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
                                                     <td>
                                                         <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a>
-                                                        <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
+                                                        <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
                                                     </td>
                                                 </tr>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
@@ -351,17 +353,22 @@ $CI->load->library('session');
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Archive Confirmation</h4>
+                                                                <h4 class="modal-title" id="myModalLabel">Add Quantity</h4>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                     aria-hidden="true"></button>
                                                             </div>
                                                             <div class="modal-body">
-                                                                <p>Are you sure you want to archive this vaccine?</p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-light"
-                                                                    data-bs-dismiss="modal">Close</button>
-                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/remove/" . $vaccine['id']; ?>">Proceed</a>
+                                                                <?php echo form_open(base_url() . "vaccine/action/add_quantity/" . $vaccine['id']); ?>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Quantity to add</label>
+                                                                        <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+                                                                    </div>
+                                                                    <div class="modal-footer px-0 pb-0">
+                                                                        <button type="button" class="btn btn-light"
+                                                                            data-bs-dismiss="modal">Close</button>
+                                                                        <button type="submit" class="btn btn-primary">Add</button>
+                                                                    </div>
+                                                                </form>
                                                             </div>
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->

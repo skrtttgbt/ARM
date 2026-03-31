@@ -338,7 +338,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <h5 class="card-title mb-1">Incident Trend and Prediction</h5>
-                                        <p class="text-muted mb-0">Actual vs predicted incidents for the last 12 months</p>
+                                        <p class="text-muted mb-0">Actual vs SARIMA-predicted incidents for the last 24 months</p>
                                     </div>
                                 </div>
                                 <canvas id="monthlyTrendsChart" height="120"></canvas>
@@ -391,6 +391,21 @@
                                         <button type="submit" class="btn btn-primary">Send SMS Reminders</button>
                                     </form>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">Vaccine Prediction for Next Month</h5>
+                                        <p class="text-muted mb-0">Last 6 months plus predicted next month</p>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="fw-bold"><?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?></div>
+                                        <small class="text-muted"><?php echo htmlspecialchars($vaccine_forecast_data['next_month_label']); ?></small>
+                                    </div>
+                                </div>
+                                <canvas id="vaccinePredictionChart" height="150"></canvas>
                             </div>
                         </div>
                     </div>
@@ -449,6 +464,11 @@
             var months = <?php echo json_encode($chart_data['months']); ?>;
             var incidentCounts = <?php echo json_encode($chart_data['incident_counts']); ?>;
             var predictedIncidentCounts = <?php echo json_encode($chart_data['predicted_incident_counts']); ?>;
+            var vaccineCtx = document.getElementById('vaccinePredictionChart').getContext('2d');
+            var vaccineMonths = <?php echo json_encode($vaccine_forecast_data['chart_months']); ?>;
+            var vaccinePrediction = <?php echo json_encode($vaccine_forecast_data['chart_prediction']); ?>;
+            var vaxirabSeries = <?php echo json_encode($vaccine_forecast_data['chart_vaxirab']); ?>;
+            var speedaSeries = <?php echo json_encode($vaccine_forecast_data['chart_speeda']); ?>;
 
             new Chart(ctx, {
                 type: 'line',
@@ -482,7 +502,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Actual vs Predicted Incidents - Last 12 Months'
+                            text: 'Actual vs SARIMA Predicted Incidents - Last 24 Months'
                         },
                         legend: {
                             position: 'top'
@@ -494,6 +514,66 @@
                             title: {
                                 display: true,
                                 text: 'Count'
+                            }
+                        }
+                    }
+                }
+            });
+
+            new Chart(vaccineCtx, {
+                type: 'line',
+                data: {
+                    labels: vaccineMonths,
+                    datasets: [{
+                        label: 'Prediction',
+                        data: vaccinePrediction,
+                        borderColor: 'rgb(255, 159, 64)',
+                        backgroundColor: 'rgba(255, 159, 64, 0.15)',
+                        borderWidth: 3,
+                        borderDash: [8, 6],
+                        tension: 0.35,
+                        spanGaps: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'VaxiRab N',
+                        data: vaxirabSeries,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.15)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        spanGaps: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }, {
+                        label: 'SPEEDA',
+                        data: speedaSeries,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                        borderWidth: 3,
+                        tension: 0.35,
+                        spanGaps: false,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Prediction, VaxiRab N, and SPEEDA'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Vaccinations'
                             }
                         }
                     }

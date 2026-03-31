@@ -41,6 +41,7 @@ $route['vaccine/archive'] = 'VaccineController/archive';
 $route['vaccine/view/(:any)'] = 'VaccineController/view/$1';
 $route['vaccine/analyze/(:any)'] = 'VaccineController/analyze/$1';
 $route['vaccine/action/remove/(:any)'] = 'VaccineController/remove/$1';
+$route['vaccine/action/add_quantity/(:any)'] = 'VaccineController/addQuantity/$1';
 $route['vaccine/action/retreive/(:any)'] = 'VaccineController/retreive/$1';
 $route['vaccine/action/retrieve/(:any)'] = 'VaccineController/retrieve/$1';
 
@@ -57,12 +58,15 @@ $route['incident/list'] = 'IncidentController/index';
 $route['incident/create'] = 'IncidentController/create';
 $route['incident/create/(:any)'] = 'IncidentController/create/$1';
 $route['incident/create_schedule/(:any)'] = 'IncidentController/create_schedule/$1';
+$route['incident/action/complete/(:any)'] = 'IncidentController/complete/$1';
 
 
 $route['schedule'] = 'ScheduleController/index';
 $route['schedule/list'] = 'ScheduleController/index';
 $route['schedule/future'] = 'ScheduleController/future';
 $route['schedule/proceed/(:any)'] = 'ScheduleController/proceed/$1';
+$route['schedule/complete/(:any)'] = 'ScheduleController/complete/$1';
+$route['schedule/barcode_details/(:any)'] = 'ScheduleController/barcodeDetails/$1';
 
 $route['log/transaction'] = 'TransactionsController/index';
 

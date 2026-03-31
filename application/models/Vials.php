@@ -2,16 +2,29 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Vials extends CI_Model {
+
+    private function hasDeletedColumn()
+    {
+        return $this->db->field_exists('deleted', 'vials');
+    }
     
     public function getVials()
 	{
-        $query = $this->db->where('deleted', 0)->get('vials');
+        if ($this->hasDeletedColumn()) {
+            $this->db->where('deleted', 0);
+        }
+
+        $query = $this->db->get('vials');
 
         return $query->result_array();
 	}
 
     public function getArchives()
 	{
+        if (!$this->hasDeletedColumn()) {
+            return [];
+        }
+
         $query = $this->db->where('deleted', 1)->get('vials');
 
         return $query->result_array();
@@ -23,7 +36,6 @@ class Vials extends CI_Model {
 
         return $query->row_array();
     }
-
 
     public function getVialByBarcode($code) 
     {
@@ -63,28 +75,6 @@ class Vials extends CI_Model {
         return $query->row_array();
     }
 
-    public function getStock($code) {
-
-        $vial_id = intval($code) - 1000000;
-
-        $vial_query = $this->db->where('id', $vial_id)->get('vials');
-
-        $vial = $vial_query->row_array();
-
-        $checkUsege = $this->db->where('vial_id', $vial['id'])->get('schedules');
-
-        $getDose_query = $this->db->where('id', $vial['vaccine_id'])->get('vaccines');
-
-        $getDose = $getDose_query->row_array();
-
-        if($checkUsege->num_rows() <= $getDose['dose']) {
-            return true;
-        } else {
-            return false;
-        }
-
-    }
-
     public function createVial() {
 
         $date = date("F j, Y");
@@ -93,15 +83,53 @@ class Vials extends CI_Model {
         'user_id' => $this->input->post('user_id'),
         'vaccine_id' => $this->input->post('vaccine_id'),
         'status' => 0,
-        'prod_date' => $this->input->post('prod_date'),
-        'expi_date' => $this->input->post('expi_date'),
-        'deleted' => 0,
         'updated_at' => time(),
         'created_at' => $date
         );
 
+        if ($this->hasDeletedColumn()) {
+            $data['deleted'] = 0;
+        }
+
+        if ($this->db->field_exists('prod_date', 'vials')) {
+            $data['prod_date'] = $this->input->post('prod_date');
+        }
+
+        if ($this->db->field_exists('expi_date', 'vials')) {
+            $data['expi_date'] = $this->input->post('expi_date');
+        }
+
         return $this->db->insert('vials',$data);
 
+    }
+
+    public function createVialForVaccine($user_id, $vaccine_id)
+    {
+        $date = date("F j, Y");
+
+        $data = array(
+        'user_id' => $user_id,
+        'vaccine_id' => $vaccine_id,
+        'status' => 1,
+        'updated_at' => time(),
+        'created_at' => $date
+        );
+
+        if ($this->hasDeletedColumn()) {
+            $data['deleted'] = 0;
+        }
+
+        if ($this->db->field_exists('prod_date', 'vials')) {
+            $data['prod_date'] = '';
+        }
+
+        if ($this->db->field_exists('expi_date', 'vials')) {
+            $data['expi_date'] = '';
+        }
+
+        $this->db->insert('vials', $data);
+
+        return $this->db->insert_id();
     }
 
     public function activateVial($code) {
@@ -126,7 +154,11 @@ class Vials extends CI_Model {
     }
     
     public function getTotalVials() {
-        $query = $this->db->where('deleted', 0)->get('vials');
+        if ($this->hasDeletedColumn()) {
+            $this->db->where('deleted', 0);
+        }
+
+        $query = $this->db->get('vials');
         
         return $query->num_rows();
     }

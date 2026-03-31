@@ -327,6 +327,9 @@
                                             if ($checkDate !== $today) {
                                                 continue;
                                             }
+                                            if ((int)$schedule['status'] === 1) {
+                                                continue;
+                                            }
                                             $incident = $this->incidents->getIncident($schedule['incident_id']);
                                             if (!$incident) {
                                                 continue;
@@ -343,12 +346,20 @@
                                                 <td>
                                                 <?php if((int)$schedule['status'] === 1) { ?>
                                                     <button class="btn btn-success btn-sm">COMPLETED</button>
+                                                <?php } elseif((int)$schedule['status'] === 2) { ?>
+                                                    <button class="btn btn-info btn-sm">ONGOING</button>
                                                 <?php } else { ?>
                                                     <button class="btn btn-warning btn-sm" style="color:white">PENDING</button>
                                                 <?php } ?>
                                                 </td>
                                                 <td>
-                                                    <a href="<?php echo base_url() . "schedule/proceed/" . $schedule['id']; ?>" class="btn btn-primary btn-sm">Proceed</a>
+                                                    <?php if((int)$schedule['status'] === 0) { ?>
+                                                        <a href="<?php echo base_url() . "schedule/proceed/" . $schedule['id']; ?>" class="btn btn-primary btn-sm">Proceed</a>
+                                                    <?php } elseif((int)$schedule['status'] === 2) { ?>
+                                                        <a href="<?php echo base_url() . "schedule/complete/" . $schedule['id']; ?>" class="btn btn-success btn-sm">Complete</a>
+                                                    <?php } else { ?>
+                                                        <button class="btn btn-success btn-sm" disabled>Completed</button>
+                                                    <?php } ?>
                                                 </td>
                                             </tr>
                                             <?php

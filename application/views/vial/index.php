@@ -345,6 +345,10 @@
                                             <tr>
                                                 <th>Vial Barcode</th>
                                                 <th>Vaccine Name</th>
+                                                <th>Incident ID</th>
+                                                <th>Patient Name</th>
+                                                <th>Animal Type</th>
+                                                <th>Vaccination Date</th>
                                                 <th>Prod Date</th>
                                                 <th>Expiry Date</th>
                                                 <th>Usage</th>
@@ -357,6 +361,7 @@
                                                 foreach($vials as $vial) {
 
                                                     $vaccine = $this->vaccines->getVaccine($vial['vaccine_id']);
+                                                    $incident_data = isset($vial_incident_map[$vial['id']]) ? $vial_incident_map[$vial['id']] : null;
 
                                                     
                                                 ?>
@@ -366,6 +371,10 @@
                                                         <img src="<?php echo base_url() . "vial/barcode/" . $vial['id']; ?>" alt="Barcode" style="width:150px;height:30px"></a>
                                                     </td>
                                                     <td><?php echo $vaccine['name']; ?></td>
+                                                    <td><?php echo $incident_data ? $incident_data['incident_id'] : 'N/A'; ?></td>
+                                                    <td><?php echo $incident_data ? $incident_data['patient_first_name'] . ' ' . $incident_data['patient_last_name'] : 'N/A'; ?></td>
+                                                    <td><?php echo $incident_data ? $incident_data['animal_type'] : 'N/A'; ?></td>
+                                                    <td><?php echo $incident_data ? $incident_data['schedule'] : 'N/A'; ?></td>
                                                     <td><?php echo $vial['prod_date']; ?></td>
                                                     <td><?php echo $vial['expi_date']; ?></td>
                                                     <td><button class="btn btn-success btn-sm"   data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vial['id']; ?>">VIEW</button></td>

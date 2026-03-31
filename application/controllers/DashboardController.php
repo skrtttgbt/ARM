@@ -59,8 +59,9 @@ class DashboardController extends CI_Controller {
         $data['total_schedules_today'] = $this->schedules->getTodaySchedulesCount();
         $data['total_vaccines'] = $this->vaccines->getTotalVaccines();
         $data['total_vials'] = $this->vials->getTotalVials();
-                $data['forecast_data'] = $this->getVialForecastData();
-                        $data['chart_data'] = $this->getChartData();
+        $data['forecast_data'] = $this->getVialForecastData();
+        $data['vaccine_forecast_data'] = $this->getVaccineForecastData();
+        $data['chart_data'] = $this->getChartData();
         
         $this->load->view('main/dashboard', $data);
     }
@@ -217,9 +218,92 @@ class DashboardController extends CI_Controller {
             'stock_status' => $stock_status
         ];
     }
+
+    private function getVaccineForecastData()
+    {
+        $history_months = 12;
+        $forecast_months = 1;
+        $month_keys = [];
+        $month_labels = [];
+        $overall_actual = [];
+        $vaxirab_actual = [];
+        $speeda_actual = [];
+
+        for ($i = $history_months - 1; $i >= 0; $i--) {
+            $date = date('Y-m', strtotime("-$i months"));
+            $month_keys[] = $date;
+            $month_labels[] = date('M Y', strtotime($date . '-01'));
+            $overall_actual[] = 0;
+            $vaxirab_actual[] = 0;
+            $speeda_actual[] = 0;
+        }
+
+        $this->db->select("
+            DATE_FORMAT(s.schedule, '%Y-%m') AS month_key,
+            COUNT(*) AS total_count,
+            SUM(CASE WHEN va.name = 'VaxiRab N' THEN 1 ELSE 0 END) AS vaxirab_count,
+            SUM(CASE WHEN va.name = 'SPEEDA' THEN 1 ELSE 0 END) AS speeda_count
+        ", false);
+        $this->db->from('schedules s');
+        $this->db->join('vials v', 's.vial_id = v.id', 'left');
+        $this->db->join('vaccines va', 'v.vaccine_id = va.id', 'left');
+        $this->db->where('s.status', 1);
+        $this->db->where('s.schedule IS NOT NULL', null, false);
+        $this->db->where('s.schedule <>', '');
+        $this->db->group_by("DATE_FORMAT(s.schedule, '%Y-%m')", false);
+        $rows = $this->db->get()->result_array();
+
+        $index_by_key = array_flip($month_keys);
+        foreach ($rows as $row) {
+            if (!isset($index_by_key[$row['month_key']])) {
+                continue;
+            }
+
+            $idx = $index_by_key[$row['month_key']];
+            $overall_actual[$idx] = (int) $row['total_count'];
+            $vaxirab_actual[$idx] = (int) $row['vaxirab_count'];
+            $speeda_actual[$idx] = (int) $row['speeda_count'];
+        }
+
+        $overall_prediction = $this->buildSarimaPredictionSeries($overall_actual, $forecast_months);
+        $vaxirab_prediction = $this->buildSarimaPredictionSeries($vaxirab_actual, $forecast_months);
+        $speeda_prediction = $this->buildSarimaPredictionSeries($speeda_actual, $forecast_months);
+
+        $next_month_label = date('M Y', strtotime('+1 month'));
+        $chart_months = $month_labels;
+        $chart_months[] = $next_month_label;
+        $prediction_start_index = 0;
+
+        foreach ($month_keys as $index => $month_key) {
+            if (substr($month_key, 5, 2) === '10') {
+                $prediction_start_index = $index;
+                break;
+            }
+        }
+
+        $chart_prediction = [];
+        foreach ($overall_actual as $index => $value) {
+            $chart_prediction[] = $index >= $prediction_start_index ? $value : null;
+        }
+        $chart_prediction[] = end($overall_prediction);
+
+        $chart_vaxirab = $vaxirab_actual;
+        $chart_vaxirab[] = null;
+        $chart_speeda = $speeda_actual;
+        $chart_speeda[] = null;
+
+        return [
+            'predicted_next_month' => end($overall_prediction),
+            'next_month_label' => $next_month_label,
+            'chart_months' => $chart_months,
+            'chart_prediction' => $chart_prediction,
+            'chart_vaxirab' => $chart_vaxirab,
+            'chart_speeda' => $chart_speeda
+        ];
+    }
     
     private function getChartData() {
-        $history_months = 12;
+        $history_months = 24;
         $forecast_months = 3;
         $months = [];
         $incident_counts = [];
@@ -240,16 +324,13 @@ class DashboardController extends CI_Controller {
             $incident_counts[] = $result ? (int)$result->count : 0;
         }
 
-        $predicted_values = $this->predictIncidentCounts($incident_counts, $forecast_months);
         $actual_series = $incident_counts;
-        $prediction_series = array_fill(0, count($incident_counts) - 1, null);
-        $prediction_series[] = end($incident_counts);
+        $prediction_series = $this->buildSarimaPredictionSeries($incident_counts, $forecast_months);
 
         for ($i = 1; $i <= $forecast_months; $i++) {
             $future_date = date('Y-m', strtotime("+$i months"));
             $months[] = date('M Y', strtotime($future_date));
             $actual_series[] = null;
-            $prediction_series[] = $predicted_values[$i - 1];
         }
 
         return [
@@ -259,40 +340,55 @@ class DashboardController extends CI_Controller {
         ];
     }
 
-    private function predictIncidentCounts($incident_counts, $forecast_months)
+    private function buildSarimaPredictionSeries($incident_counts, $forecast_months)
     {
         $count = count($incident_counts);
+        $seasonal_period = 12;
+
         if ($count === 0) {
             return array_fill(0, $forecast_months, 0);
         }
 
-        if ($count === 1) {
-            return array_fill(0, $forecast_months, (int) $incident_counts[0]);
+        if ($count <= $seasonal_period + 1) {
+            $fallback = array_fill(0, $count - 1, null);
+            $fallback[] = end($incident_counts);
+
+            for ($i = 1; $i <= $forecast_months; $i++) {
+                $fallback[] = (int) end($incident_counts);
+            }
+
+            return $fallback;
         }
 
-        $sum_x = 0;
-        $sum_y = 0;
-        $sum_xy = 0;
-        $sum_x2 = 0;
+        // SARIMA(0,1,0)(0,1,0,12): seasonal random-walk with first and seasonal differencing.
+        // In-sample estimate: y_t = y_(t-1) + y_(t-12) - y_(t-13)
+        $prediction_series = [];
 
-        foreach ($incident_counts as $index => $value) {
-            $x = $index + 1;
-            $sum_x += $x;
-            $sum_y += $value;
-            $sum_xy += $x * $value;
-            $sum_x2 += $x * $x;
+        for ($index = 0; $index < $count; $index++) {
+            if ($index < $seasonal_period + 1) {
+                $prediction_series[] = null;
+                continue;
+            }
+
+            $predicted = $incident_counts[$index - 1]
+                + $incident_counts[$index - $seasonal_period]
+                - $incident_counts[$index - $seasonal_period - 1];
+
+            $prediction_series[] = max(0, (int) round($predicted));
         }
 
-        $denominator = ($count * $sum_x2) - ($sum_x * $sum_x);
-        $slope = $denominator !== 0 ? (($count * $sum_xy) - ($sum_x * $sum_y)) / $denominator : 0;
-        $intercept = ($sum_y - ($slope * $sum_x)) / $count;
+        $series_for_forecast = $incident_counts;
+        for ($i = 0; $i < $forecast_months; $i++) {
+            $last_index = count($series_for_forecast) - 1;
+            $forecast = $series_for_forecast[$last_index]
+                + $series_for_forecast[$last_index - $seasonal_period + 1]
+                - $series_for_forecast[$last_index - $seasonal_period];
 
-        $predictions = [];
-        for ($i = 1; $i <= $forecast_months; $i++) {
-            $x = $count + $i;
-            $predictions[] = max(0, (int) round($intercept + ($slope * $x)));
+            $forecast = max(0, (int) round($forecast));
+            $series_for_forecast[] = $forecast;
+            $prediction_series[] = $forecast;
         }
 
-        return $predictions;
+        return $prediction_series;
     }
 }

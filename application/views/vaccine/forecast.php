@@ -307,8 +307,40 @@ $CI->load->library('session');
                     </div>
                 <?php endif; ?>
 
-                <h4 class="card-title">Vaccine - Archive</h4>
+                <h4 class="card-title">Vaccine Forecast</h4>
                 <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">SARIMA Forecast Lines</h5>
+                                <canvas id="vaccineForecastChart" height="110"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Next Month Prediction</h5>
+                                <h2><?php echo (int) $forecast_data['predicted_next_month']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">VaxiRab N Total</h5>
+                                <h2><?php echo (int) $forecast_data['vaxirab_total']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">SPEEDA Total</h5>
+                                <h2><?php echo (int) $forecast_data['speeda_total']; ?></h2>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-lg-12 ">
                         <div class="card">
 
@@ -323,7 +355,7 @@ $CI->load->library('session');
                                                 <th>Type</th>
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
-                                                <th>Action</th>
+                                                <th>Quantity</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -337,30 +369,8 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['type'];?></td>
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
-                                                    <td>
-                                                        <a class="btn btn-secondary dropdown-toggle btn-sm"  data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>"><i class="fas fa-trash-alt"></i></a>
-                                                    </td>
+                                                    <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0; ?></td>
                                                 </tr>
-                                                <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
-                                                    aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Retreive Confirmation</h4>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                    aria-hidden="true"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <p>Are you sure wyou want to retrieve?</p>
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-light"
-                                                                    data-bs-dismiss="modal">Close</button>
-                                                                <a class="btn btn-primary" href="<?php echo base_url() . "vaccine/action/retreive/" . $vaccine['id']; ?>">Proceed</a>
-                                                            </div>
-                                                        </div><!-- /.modal-content -->
-                                                    </div><!-- /.modal-dialog -->
-                                                </div><!-- /.modal -->
                                                 <?php
                                                 }
                                             }
@@ -418,8 +428,59 @@ $CI->load->library('session');
 
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         $('#default_order').DataTable();
+
+        const vaccineForecastCtx = document.getElementById('vaccineForecastChart').getContext('2d');
+        new Chart(vaccineForecastCtx, {
+            type: 'line',
+            data: {
+                labels: <?php echo json_encode($forecast_data['months']); ?>,
+                datasets: [
+                    {
+                        label: 'Prediction',
+                        data: <?php echo json_encode($forecast_data['overall_prediction']); ?>,
+                        borderColor: '#5f76e8',
+                        backgroundColor: 'rgba(95, 118, 232, 0.12)',
+                        tension: 0.35,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'VaxiRab N',
+                        data: <?php echo json_encode($forecast_data['vaxirab_prediction']); ?>,
+                        borderColor: '#01caf1',
+                        backgroundColor: 'rgba(1, 202, 241, 0.10)',
+                        tension: 0.35,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'SPEEDA',
+                        data: <?php echo json_encode($forecast_data['speeda_prediction']); ?>,
+                        borderColor: '#ff4f70',
+                        backgroundColor: 'rgba(255, 79, 112, 0.10)',
+                        tension: 0.35,
+                        spanGaps: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
     </script>
 </body>
 

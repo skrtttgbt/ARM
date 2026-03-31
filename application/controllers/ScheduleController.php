@@ -35,6 +35,7 @@ class ScheduleController extends CI_Controller {
         $this->load->model('Incidents');
         $this->load->model('Patients');
         $this->load->model('Vials');
+        $this->load->model('Vaccines');
         $this->load->library('session');
         $this->load->helper('url');
         $this->load->library('form_validation');
@@ -146,70 +147,163 @@ class ScheduleController extends CI_Controller {
         $data['incident'] = $incident;
         $data['patient'] = $patient;
 
-        if(isset($_POST['sendNotif'])) {
+        if(isset($_POST['proceedTransaction'])) {
+            $barcode = trim((string) $this->input->post('barcode'));
 
-            $mobile = normalize_ph_mobile($this->input->post('mobile'));
-            if ($mobile === '') {
-                $this->session->set_flashdata('error', 'Invalid mobile number.');
-                redirect('schedule/proceed/' . $id);
-            }
-
-            $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
-            $message = sprintf("you are next");
-                
-            $data2 = [
-                'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-                'message' => $message,
-                'phone_number' => $mobile
-                ];
-                
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-            $response = curl_exec($ch);
-            curl_close($ch);
-
-            $this->session->set_flashdata('success', 'Notification has been sent.');
-            redirect('schedule/proceed/' . $id);
-
-
-        } else if(isset($_POST['checkBarcode'])) {
-
-        
-            $barcode = $this->input->post('barcode');
-
-            if(!empty($barcode)) {
-
-                if($this->vials->getVialByBarcode($barcode)) {
-
-
-                    if($this->vials->getStock($barcode)) {
-                        //$this->vials->activateVial($barcode);
-                        $this->schedules->updateScheduleDone($id,$barcode);
-                        $this->session->set_flashdata('message', 'Transaction complete');
-                        redirect('schedule');
-                    } else {
-                        $this->session->set_flashdata('barcode_error', 'Vial is fully consumed');
-                        redirect('schedule/proceed/' . $id);
-                    }
-
-                } else {
-
-                    $this->session->set_flashdata('barcode_error', 'Invalid barcode');
-                    redirect('schedule/proceed/' . $id);
-                }
-
-            } else {
+            if ($barcode === '') {
                 $this->session->set_flashdata('barcode_error', 'Barcode is empty');
                 redirect('schedule/proceed/' . $id);
+                return;
             }
 
-        } else {
-            $this->load->view('schedule/proceed', $data);
+            $resolved = $this->resolveBarcodeDetails($barcode);
+
+            if (!$resolved['success']) {
+                $this->session->set_flashdata('barcode_error', $resolved['message']);
+                redirect('schedule/proceed/' . $id);
+                return;
+            }
+
+            $vaccine = $resolved['vaccine'];
+
+            if ((int) $vaccine['quantity'] <= 0) {
+                $this->session->set_flashdata('barcode_error', 'Available quantity is already zero.');
+                redirect('schedule/proceed/' . $id);
+                return;
+            }
+
+            $this->db->trans_start();
+            $created_vial_id = $this->vials->createVialForVaccine((int) $session_id, (int) $vaccine['id']);
+            $this->schedules->updateScheduleOngoingByVialId($id, $created_vial_id);
+            $this->vaccines->deductQuantity($vaccine['id'], 1);
+
+            $this->db->trans_complete();
+
+            if (!$this->db->trans_status()) {
+                $this->session->set_flashdata('barcode_error', 'Unable to complete the transaction right now.');
+                redirect('schedule/proceed/' . $id);
+                return;
+            }
+
+            $sms_message = sprintf(
+                "Your vaccination schedule for %s has been completed using vaccine %s.",
+                date('M j, Y', strtotime($schedule['schedule'])),
+                $vaccine['name']
+            );
+
+            if (!$this->sendSmsNotification($patient['mobile'], $sms_message)) {
+                log_message('error', 'Schedule proceed SMS notification failed for patient ID: ' . $patient['id']);
+            }
+
+            $this->session->set_flashdata('message', 'Schedule is now ongoing.');
+            redirect('schedule');
+            return;
         }
+
+        $this->load->view('schedule/proceed', $data);
+    }
+
+    public function complete($id)
+    {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        $schedule = $this->schedules->getSchedule($id);
+        if (!$schedule) {
+            $this->session->set_flashdata('error', 'Schedule not found.');
+            redirect('schedule');
+            return;
+        }
+
+        $this->schedules->updateScheduleByCol($id, 'status', 1);
+        $this->session->set_flashdata('message', 'Schedule is now completed.');
+        redirect('schedule');
+    }
+
+    public function barcodeDetails($id)
+    {
+        if (!$this->session->userdata('user_id')) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $schedule = $this->schedules->getSchedule($id);
+        if (!$schedule) {
+            return $this->jsonResponse(['success' => false, 'message' => 'Schedule not found.'], 404);
+        }
+
+        $barcode = trim((string) $this->input->post('barcode'));
+        if ($barcode === '') {
+            return $this->jsonResponse(['success' => false, 'message' => 'Barcode is empty.'], 422);
+        }
+
+        $resolved = $this->resolveBarcodeDetails($barcode);
+        if (!$resolved['success']) {
+            return $this->jsonResponse(['success' => false, 'message' => $resolved['message']], 422);
+        }
+
+        $vaccine = $resolved['vaccine'];
+        return $this->jsonResponse([
+            'success' => true,
+            'barcode' => $barcode,
+            'can_proceed' => (int) $vaccine['quantity'] > 0,
+            'message' => (int) $vaccine['quantity'] > 0 ? '' : 'Available quantity is already zero.',
+            'vaccine' => [
+                'id' => $vaccine['id'],
+                'name' => $vaccine['name'],
+                'type' => $vaccine['type'],
+                'capacity' => $vaccine['capacity'],
+                'amount' => $vaccine['amount'],
+                'quantity' => $vaccine['quantity']
+            ]
+        ]);
+    }
+
+    private function sendSmsNotification($mobile, $message)
+    {
+        $mobile = normalize_ph_mobile($mobile);
+
+        if ($mobile === '') {
+            return false;
+        }
+
+        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
+        $payload = [
+            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
+            'message' => $message,
+            'phone_number' => $mobile
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        $response = curl_exec($ch);
+        $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return $response !== false && $http_code >= 200 && $http_code < 300;
+    }
+
+    private function resolveBarcodeDetails($barcode)
+    {
+        $vaccine = $this->vaccines->getVaccineByBarcode($barcode);
+        if (!$vaccine) {
+            return ['success' => false, 'message' => 'Invalid barcode', 'vial' => null, 'vaccine' => null];
+        }
+
+        return ['success' => true, 'message' => '', 'vial' => null, 'vaccine' => $vaccine];
+    }
+
+    private function jsonResponse($payload, $status_code = 200)
+    {
+        return $this->output
+            ->set_status_header($status_code)
+            ->set_content_type('application/json')
+            ->set_output(json_encode($payload));
     }
 
 }

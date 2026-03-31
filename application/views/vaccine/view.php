@@ -314,6 +314,7 @@
                                         <div class="form-group col-md-12">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Type</label>
                                             <select class="form-select" name="type" id="">
+                                                <option value="Cat and Dog" <?php echo ($vaccine['type'] == "Cat and Dog" ? "selected" : ""); ?>>Cat and Dog</option>
                                                 <option value="Dog" <?php echo ($vaccine['type'] == "Dog" ? "selected" : ""); ?>>Dog</option>
                                                 <option value="Cat" <?php echo ($vaccine['type'] == "Cat" ? "selected" : ""); ?>>Cat</option>
                                             </select>
@@ -334,6 +335,42 @@
                                             <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Description</label>
                                             <textarea name="description" type="text" class="form-control <?php echo (form_error('description') ? "is-invalid" : ""); ?>"><?php echo $vaccine['description']; ?></textarea>
                                             <?php echo form_error('description', '<div class="invalid-feedback">', '</div>'); ?>  
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label class="col-form-label">Manufacturer Company</label>
+                                            <input name="manufacturer_company" type="text" value="<?php echo isset($vaccine['manufacturer_company']) ? $vaccine['manufacturer_company'] : ''; ?>" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label class="col-form-label">Manufacturer Location</label>
+                                            <input name="manufacturer_location" type="text" value="<?php echo isset($vaccine['manufacturer_location']) ? $vaccine['manufacturer_location'] : ''; ?>" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label class="col-form-label">Importer / Distributor Company</label>
+                                            <input name="importer_company" type="text" value="<?php echo isset($vaccine['importer_company']) ? $vaccine['importer_company'] : ''; ?>" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label class="col-form-label">Importer / Distributor Location</label>
+                                            <input name="importer_location" type="text" value="<?php echo isset($vaccine['importer_location']) ? $vaccine['importer_location'] : ''; ?>" class="form-control">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label class="col-form-label">Quantity</label>
+                                            <input name="quantity" type="number" min="0" value="<?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0; ?>" class="form-control <?php echo (form_error('quantity') ? "is-invalid" : ""); ?>">
+                                            <?php echo form_error('quantity', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 

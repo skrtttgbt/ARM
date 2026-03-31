@@ -146,4 +146,24 @@ class IncidentController extends CI_Controller {
         }
     }
 
+    public function complete($id)
+    {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        $incident = $this->incidents->getIncident($id);
+
+        if (!$incident) {
+            $this->session->set_flashdata('error', 'Incident not found.');
+            redirect('incident');
+            return;
+        }
+
+        $this->incidents->updateIncidentByCol($id, 'status', 1);
+        $this->session->set_flashdata('message', 'Incident marked as completed.');
+        redirect('incident');
+    }
+
 }

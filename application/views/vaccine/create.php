@@ -347,7 +347,8 @@ $CI->load->library('session');
                                         <div class="form-group col-md-12">
                                             <label for="vaccineType" class="col-form-label">Vaccine Type</label>
                                             <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type" id="vaccineType">
-                                                <option value="Dog" <?php echo set_select('type', 'Dog', TRUE); ?>>Dog</option>
+                                                <option value="Cat and Dog" <?php echo set_select('type', 'Cat and Dog', TRUE); ?>>Cat and Dog</option>
+                                                <option value="Dog" <?php echo set_select('type', 'Dog'); ?>>Dog</option>
                                                 <option value="Cat" <?php echo set_select('type', 'Cat'); ?>>Cat</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>
@@ -377,6 +378,14 @@ $CI->load->library('session');
                                             <?php echo form_error('capacity', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
 
+                                        <div class="form-group col-md-6 mt-2">
+                                            <label for="vaccineQuantity" class="col-form-label">Quantity</label>
+                                            <input name="quantity" type="number" min="0" value="<?php echo set_value('quantity', '0'); ?>" class="form-control <?php echo (form_error('quantity') ? "is-invalid" : ""); ?>" id="vaccineQuantity">
+                                            <?php echo form_error('quantity', '<div class="invalid-feedback">', '</div>'); ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
                                         <div class="form-group col-md-6 mt-2">
                                             <label for="doseAmount" class="col-form-label">Dose Amount</label>
                                             <select class="form-select <?php echo (form_error('amount') ? "is-invalid" : ""); ?>" name="amount" id="doseAmount">

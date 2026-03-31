@@ -55,8 +55,34 @@ class VialController extends CI_Controller {
 
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vials'] = $this->vials->getVials();
+        $data['vial_incident_map'] = $this->getVialIncidentMap();
 
         $this->load->view('vial/index', $data);
+    }
+
+    private function getVialIncidentMap()
+    {
+        $this->db->select('
+            s.vial_id,
+            s.schedule,
+            s.incident_id,
+            i.animal_type,
+            i.bite_date,
+            p.patient_first_name,
+            p.patient_last_name
+        ');
+        $this->db->from('schedules s');
+        $this->db->join('incidents i', 's.incident_id = i.id', 'left');
+        $this->db->join('patients p', 'i.patient_id = p.id', 'left');
+        $this->db->where('s.status', 1);
+        $rows = $this->db->get()->result_array();
+
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['vial_id']] = $row;
+        }
+
+        return $map;
     }
 
     public function create() {

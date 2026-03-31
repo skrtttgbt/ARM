@@ -46,6 +46,22 @@ class Vaccines extends CI_Model {
         return $this->db->update('vaccines');
     }
 
+    public function addQuantity($id, $quantity)
+    {
+        $this->db->set('quantity', 'quantity + ' . (int) $quantity, false);
+        $this->db->where('id', $id);
+
+        return $this->db->update('vaccines');
+    }
+
+    public function deductQuantity($id, $quantity)
+    {
+        $this->db->set('quantity', 'GREATEST(quantity - ' . (int) $quantity . ', 0)', false);
+        $this->db->where('id', $id);
+
+        return $this->db->update('vaccines');
+    }
+
     public function createVaccine() {
 
         $date = date("F j, Y");
@@ -59,6 +75,11 @@ class Vaccines extends CI_Model {
         'description' => $this->input->post('description'),
         'capacity' => $this->input->post('capacity'),
         'amount' => $this->input->post('amount'),
+        'quantity' => $this->input->post('quantity'),
+        'manufacturer_company' => $this->input->post('manufacturer_company'),
+        'manufacturer_location' => $this->input->post('manufacturer_location'),
+        'importer_company' => $this->input->post('importer_company'),
+        'importer_location' => $this->input->post('importer_location'),
         'dose_interval' => 0,
         'deleted' => 0,
         'updated_at' => time(),
@@ -76,6 +97,11 @@ class Vaccines extends CI_Model {
         $this->db->set("description", $this->input->post('description'));
         $this->db->set("capacity", $this->input->post('capacity'), false);
         $this->db->set("amount", $this->input->post('amount'), false);
+        $this->db->set("quantity", $this->input->post('quantity'), false);
+        $this->db->set("manufacturer_company", $this->input->post('manufacturer_company'));
+        $this->db->set("manufacturer_location", $this->input->post('manufacturer_location'));
+        $this->db->set("importer_company", $this->input->post('importer_company'));
+        $this->db->set("importer_location", $this->input->post('importer_location'));
         $this->db->where('id', $id);
         
         return $this->db->update('vaccines');

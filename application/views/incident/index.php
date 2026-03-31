@@ -332,16 +332,15 @@
                                                 <td><?php echo $incident['bite_date']; ?></td>
                                                 <td>
                                                 <?php
-                                                $checkSchedule = $this->incidents->checkSchedule($incident['id']);
-                                                $checkCompletedSchedule = $this->incidents->countCompletedSchedule($incident['id']); 
-                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                $incidentStatus = (int) $incident['status'];
+                                                if($incidentStatus === 1) {
                                                 ?>
                                                 
-                                                <button class="btn btn-success btn-sm">COMPLETE</button>
+                                                <button class="btn btn-success btn-sm">Completed</button>
                                                 <?php
                                                 } else {
                                                 ?>
-                                                <button class="btn btn-warning btn-sm" style="color:white">ON-GOING</button>
+                                                <button class="btn btn-warning btn-sm" style="color:white">Ongoing</button>
                                                 <?php 
                                                 }
                                                 ?>
@@ -350,23 +349,14 @@
                                                 </td>
                                                 <td>
                                                 <?php
-                                                if($checkCompletedSchedule == $incident['dose']) {
+                                                if($incidentStatus === 1) {
                                                 ?>
-                                                <a class="btn btn-secondary btn-sm">Transaction Complete</a>
+                                                <span class="text-success fw-bold">Completed</span>
                                                 <?php
                                                 } else {
-
-                                                    if($checkSchedule) {
-                                                    ?>
-                                                        <button class="btn btn-secondary btn-sm">SCHEDULED</button>
-                                                    <?php 
-                                                    } else {
-                                                    ?>
-                                                        <a href="<?php echo base_url() . "incident/create_schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
-                                                    <?php  
-                                                    }
-
-                                                
+                                                ?>
+                                                <a href="<?php echo base_url() . "incident/action/complete/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Complete</a>
+                                                <?php
                                                 }
                                                 ?>    
                                                     
