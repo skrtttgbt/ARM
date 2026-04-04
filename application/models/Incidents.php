@@ -90,23 +90,8 @@ class Incidents extends CI_Model {
         'created_at' => $date
         );
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
         $message = sprintf("sched: %s", $this->input->post('sched_date'));
-            
-        $data2 = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $mobile
-            ];
-            
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-        $response = curl_exec($ch);
-        curl_close($ch);
+        send_unisms_sms($mobile, $message);
 
         return $this->db->insert('schedules',$data);
 

@@ -251,7 +251,7 @@
                 </div>
             </div>
 
-            <footer class="footer text-center text-muted">Animal Rabies Management System</footer>
+            <?php include APPPATH . 'views/partials/footer.php'; ?>
         </div>
     </div>
 
@@ -267,3 +267,4 @@
 </body>
 
 </html>
+

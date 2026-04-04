@@ -378,16 +378,16 @@
                                     <div class="row">
                                         <div class="form-group col-md-6">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Account Type</label>
-                                            <select name="type" class="form-select">
+                                            <select name="type" id="philhealth-type" class="form-select">
                                                 <option value="Member" <?php echo set_select('type', 'Member', TRUE); ?>>Member</option>
                                                 <option value="Dependent" <?php echo set_select('type', 'Dependent'); ?>>Dependent</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>  
                                         </div>
 
-                                        <div class="form-group col-md-6">
+                                        <div class="form-group col-md-6" id="relationship-group">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Relationship</label>
-                                            <select name="relationship" class="form-select <?php echo (form_error('relationship') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess">
+                                            <select name="relationship" id="relationship" class="form-select <?php echo (form_error('relationship') ? "is-invalid" : ""); ?>">
                                                 <option value="">Select Relationship</option>
                                                 <option value="Spouse" <?php echo set_select('relationship', 'Spouse'); ?>>Spouse</option>
                                                 <option value="Child" <?php echo set_select('relationship', 'Child'); ?>>Child</option>
@@ -409,15 +409,15 @@
                                             <?php echo form_error('account_number', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
-                                        <div class="form-group col-md-4 mt-2">
+                                        <div class="form-group col-md-4 mt-2" id="account-first-name-group">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Member First Name</label>
-                                            <input name="account_first_name" type="text" class="form-control <?php echo (form_error('account_first_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('account_first_name'); ?>">
+                                            <input name="account_first_name" id="account-first-name" type="text" class="form-control <?php echo (form_error('account_first_name') ? "is-invalid" : ""); ?>" value="<?php echo set_value('account_first_name'); ?>">
                                             <?php echo form_error('account_first_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
-                                        <div class="form-group col-md-4 mt-2">
+                                        <div class="form-group col-md-4 mt-2" id="account-last-name-group">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Member Last Name</label>
-                                            <input name="account_last_name" type="text" class="form-control <?php echo (form_error('account_last_name') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" value="<?php echo set_value('account_last_name'); ?>">
+                                            <input name="account_last_name" id="account-last-name" type="text" class="form-control <?php echo (form_error('account_last_name') ? "is-invalid" : ""); ?>" value="<?php echo set_value('account_last_name'); ?>">
                                             <?php echo form_error('account_last_name', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -440,8 +440,7 @@
             <!-- ============================================================== -->
             <!-- footer -->
             <!-- ============================================================== -->
-            <footer class="footer text-center text-muted"> Footer here</a>.
-            </footer>
+            <?php include APPPATH . 'views/partials/footer.php'; ?>
             <!-- ============================================================== -->
             <!-- End footer -->
             <!-- ============================================================== -->
@@ -480,10 +479,52 @@
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
         $('#default_order').DataTable();
+
+        (function () {
+            const typeSelect = document.getElementById('philhealth-type');
+            const relationshipGroup = document.getElementById('relationship-group');
+            const relationshipInput = document.getElementById('relationship');
+            const firstNameGroup = document.getElementById('account-first-name-group');
+            const firstNameInput = document.getElementById('account-first-name');
+            const lastNameGroup = document.getElementById('account-last-name-group');
+            const lastNameInput = document.getElementById('account-last-name');
+
+            function syncPhilHealthFields() {
+                const isDependent = typeSelect && typeSelect.value === 'Dependent';
+
+                if (relationshipGroup) {
+                    relationshipGroup.style.display = isDependent ? '' : 'none';
+                }
+                if (firstNameGroup) {
+                    firstNameGroup.style.display = isDependent ? '' : 'none';
+                }
+                if (lastNameGroup) {
+                    lastNameGroup.style.display = isDependent ? '' : 'none';
+                }
+
+                if (!isDependent) {
+                    if (relationshipInput) {
+                        relationshipInput.value = '';
+                    }
+                    if (firstNameInput) {
+                        firstNameInput.value = '';
+                    }
+                    if (lastNameInput) {
+                        lastNameInput.value = '';
+                    }
+                }
+            }
+
+            if (typeSelect) {
+                typeSelect.addEventListener('change', syncPhilHealthFields);
+                syncPhilHealthFields();
+            }
+        })();
     </script>
 </body>
 
 </html>
+
 
 
 

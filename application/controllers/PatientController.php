@@ -76,8 +76,8 @@ class PatientController extends CI_Controller {
         $this->form_validation->set_rules('mobile', 'Mobile Number', 'trim|required|callback_valid_ph_mobile|callback_unique_patient_mobile');
         $this->form_validation->set_rules('relationship', 'Relationship', 'trim|callback_relationship_required_if_dependent');
         $this->form_validation->set_rules('account_number', 'Account Number', 'trim|required|min_length[2]');
-        $this->form_validation->set_rules('account_first_name', 'Member First Name', 'trim|required|min_length[2]');
-        $this->form_validation->set_rules('account_last_name', 'Member Last Name', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('account_first_name', 'Member First Name', 'trim|callback_member_name_required_if_dependent');
+        $this->form_validation->set_rules('account_last_name', 'Member Last Name', 'trim|callback_member_name_required_if_dependent');
 
         if ($this->form_validation->run() == FALSE)
 		{
@@ -210,6 +210,17 @@ class PatientController extends CI_Controller {
             $this->form_validation->set_message('relationship_required_if_dependent', 'The {field} is required when Account Type is Dependent.');
             return FALSE;
         }
+        return TRUE;
+    }
+
+    public function member_name_required_if_dependent($value)
+    {
+        $type = $this->input->post('type');
+        if ($type === 'Dependent' && strlen(trim((string) $value)) < 2) {
+            $this->form_validation->set_message('member_name_required_if_dependent', 'The {field} is required when Account Type is Dependent and must be at least 2 characters.');
+            return FALSE;
+        }
+
         return TRUE;
     }
 

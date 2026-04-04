@@ -69,7 +69,7 @@
                 <div class="btn-group mb-3" role="group"><a href="<?php echo base_url(); ?>admin" class="btn btn-primary active">Active Administrators</a><a href="<?php echo base_url(); ?>admin/archive" class="btn btn-outline-primary">Archived Administrators</a></div>
                 <div class="card"><div class="card-body"><div class="table-responsive"><table id="default_order" class="table border table-striped table-bordered text-nowrap" style="width:100%"><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Date Registered</th><th>Action</th></tr></thead><tbody><?php if($admins) { foreach($admins as $admin) { ?><tr><td><?php echo ucwords($admin['first_name'] . ' ' . $admin['last_name']); ?></td><td><?php echo $admin['email']; ?></td><td><?php echo $admin['mobile']; ?></td><td><?php echo ((int)$admin['status'] === 1) ? 'Active' : 'Pending'; ?></td><td><?php echo $admin['created_at']; ?></td><td><a href="<?php echo base_url() . 'admin/action/reset/' . $admin['id']; ?>" class="btn btn-warning btn-sm">Reset</a> <a href="<?php echo base_url() . 'admin/action/suspend/' . $admin['id']; ?>" class="btn btn-danger btn-sm">Suspend</a></td></tr><?php } } else { ?><tr><td colspan="6" class="text-center">No administrators found.</td></tr><?php } ?></tbody></table></div></div></div>
             </div>
-            <footer class="footer text-center text-muted">PetVax Manager</footer>
+            <?php include APPPATH . 'views/partials/footer.php'; ?>
         </div>
     </div>
     <script src="<?php echo base_url(); ?>assets/libs/jquery/dist/jquery.min.js"></script>
@@ -88,5 +88,6 @@
     </script>
 </body>
 </html>
+
 
 

@@ -82,12 +82,12 @@ class DashboardController extends CI_Controller {
         $this->load->model('Schedules');
         $this->load->model('Patients');
         $this->load->helper('phone');
-        $this->load->helper('semaphore');
-        $this->config->load('semaphore');
+        $this->load->helper('unisms');
+        $this->config->load('unisms');
 
-        $api_key = $this->config->item('semaphore_api_key');
+        $api_key = $this->config->item('unisms_api_key');
         if (!$api_key) {
-            $this->session->set_flashdata('message', 'Semaphore API key is not configured.');
+            $this->session->set_flashdata('message', 'UniSMS API key is not configured.');
             redirect('dashboard');
             return;
         }
@@ -131,7 +131,7 @@ class DashboardController extends CI_Controller {
                     ((int)$row['dose'] >= 3) ? $due_d3 : null
                 );
 
-                if (send_semaphore_sms($api_key, $mobile, $message)) {
+                if (send_unisms_sms($mobile, $message)) {
                     if ($should_send_d2) {
                         $this->incidents->updateIncidentByCol($row['incident_id'], 'reminder_d2_sent', 1);
                         $sent_d2++;

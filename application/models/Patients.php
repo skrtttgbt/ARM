@@ -57,9 +57,19 @@ class Patients extends CI_Model {
         $date = date("F j, Y");
         $mobile = normalize_ph_mobile($this->input->post('mobile'));
 
+        $type = $this->input->post('type');
         $relationship = $this->input->post('relationship');
-        if ($relationship === null) {
+        $account_first_name = $this->input->post('account_first_name');
+        $account_last_name = $this->input->post('account_last_name');
+
+        if ($type === 'Member') {
             $relationship = '';
+            $account_first_name = '';
+            $account_last_name = '';
+        } else {
+            if ($relationship === null) {
+                $relationship = '';
+            }
         }
 
         $data = array(
@@ -73,34 +83,19 @@ class Patients extends CI_Model {
         'weight' => $this->input->post('weight'),
         'address' => $this->input->post('address'),
         'mobile' => $mobile,
-        'philhealth_type' => $this->input->post('type'),
+        'philhealth_type' => $type,
         'philhealth_relationship' => $relationship,
         'philhealth_no' => $this->input->post('account_number'),
-        'philhealth_first_name' => $this->input->post('account_first_name'),
-        'philhealth_last_name' => $this->input->post('account_last_name'),
+        'philhealth_first_name' => $account_first_name,
+        'philhealth_last_name' => $account_last_name,
         'deleted' => 0,
         'updated_at' => time(),
         'created_at' => $date
         );
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-            
-        $message = sprintf("We’ve registered your information in our system. \n\n(Vax Safe Ramos)");
-            
-        $data2 = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $mobile
-            ];
-            
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-        $response = curl_exec($ch);
-        curl_close($ch);
-            //echo $response;
+        $message = "We've registered your information in our system.\n\n(Vax Safe Ramos)";
+        send_unisms_sms($mobile, $message);
+
         return $this->db->insert('patients',$data);
 
     }
@@ -133,4 +128,3 @@ class Patients extends CI_Model {
         return $query->num_rows();
     }
 }
-

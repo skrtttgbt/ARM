@@ -268,24 +268,7 @@ class ScheduleController extends CI_Controller {
             return false;
         }
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-        $payload = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $mobile
-        ];
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($payload));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        $response = curl_exec($ch);
-        $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        return $response !== false && $http_code >= 200 && $http_code < 300;
+        return send_unisms_sms($mobile, $message);
     }
 
     private function resolveBarcodeDetails($barcode)

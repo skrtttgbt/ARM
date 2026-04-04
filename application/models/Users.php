@@ -128,54 +128,7 @@ class Users extends CI_Model {
             return false;
         }
 
-        $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-        $data = [
-            'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-            'message' => $message,
-            'phone_number' => $mobile
-        ];
-
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-        $response = curl_exec($ch);
-        $http_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curl_error = curl_error($ch);
-        curl_close($ch);
-
-        if ($response === false) {
-            log_message('error', 'SMS request failed for ' . $mobile . '. CURL error: ' . $curl_error);
-            return false;
-        }
-
-        $decoded = json_decode($response, true);
-
-        if ($http_code < 200 || $http_code >= 300) {
-            log_message('error', 'SMS request failed for ' . $mobile . '. HTTP ' . $http_code . '. Response: ' . $response);
-            return false;
-        }
-
-        if (json_last_error() === JSON_ERROR_NONE) {
-            $response_text = json_encode($decoded);
-            $message_text = isset($decoded['message']) && is_string($decoded['message'])
-                ? $decoded['message']
-                : '';
-
-            if (
-                isset($decoded['success']) && !$decoded['success'] ||
-                isset($decoded['error']) ||
-                isset($decoded['errors']) ||
-                ($message_text !== '' && stripos($message_text, 'error') !== false)
-            ) {
-                log_message('error', 'SMS gateway rejected message for ' . $mobile . '. Response: ' . $response_text);
-                return false;
-            }
-        }
-
-        return true;
+        return send_unisms_sms($mobile, $message);
     }
 
     private function sendEmailMessage($email, $subject, $message)
@@ -317,9 +270,6 @@ class Users extends CI_Model {
             
             // Only send SMS if user has a mobile number
             if (!empty($user['mobile'])) {
-                // Send SMS with reset token
-                $url = 'https://sms.iprogtech.com/api/v1/sms_messages';
-                    
                 // Create a short reset link
                 $reset_link = base_url() . 'reset_password?token=' . $reset_token . '&email=' . urlencode($email);
                 
@@ -329,19 +279,9 @@ class Users extends CI_Model {
                     $phone = $user['mobile'];
                 }
                     
-                $data2 = [
-                    'api_token' => 'b36d92616e742c58bd0899a60a3fd23f250c2c0f',
-                    'message' => $message,
-                    'phone_number' => $phone
-                    ];
-                    
-                $ch = curl_init($url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data2));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [ 'Content-Type: application/x-www-form-urlencoded']);
-                $response = curl_exec($ch);
-                curl_close($ch);
+                if (!$this->sendSmsMessage($phone, $message)) {
+                    log_message('error', 'Password reset SMS notification failed for: ' . $phone);
+                }
             }
             
             return true;
@@ -415,4 +355,3 @@ class Users extends CI_Model {
         return $this->db->update('users');
     }
 }
-
