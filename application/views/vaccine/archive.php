@@ -328,7 +328,7 @@ $CI->load->library('session');
                                                 <th>Type</th>
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
-                                                <th>Quantity</th>
+                                                <th>Archived Quantity</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -343,7 +343,7 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['type'];?></td>
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
-                                                    <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
+                                                    <td><?php echo isset($vaccine['deleted']) ? $vaccine['deleted'] : 0;?></td>
                                                     <td>
                                                         <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Retrieve</a>
                                                     </td>

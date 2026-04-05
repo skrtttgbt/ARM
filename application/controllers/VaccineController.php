@@ -133,6 +133,62 @@ class VaccineController extends CI_Controller {
 		redirect('vaccine');
     }
 
+    public function archiveVaccine($id) {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        $session_id = $this->session->userdata('user_id');
+        $user_info = $this->users->getUser($session_id);
+
+        if (!$user_info || (int) $user_info['level'] !== 0) {
+            $this->session->set_flashdata('message', 'Only the super admin can archive vaccines.');
+            redirect('vaccine');
+            return;
+        }
+
+        $quantity_input = trim((string) $this->input->post('quantity'));
+        $password = (string) $this->input->post('password');
+        $vaccine = $this->vaccines->getVaccine($id);
+
+        if (!$vaccine) {
+            $this->session->set_flashdata('message', 'Vaccine was not found.');
+            redirect('vaccine');
+            return;
+        }
+
+        if ($quantity_input === '' || filter_var($quantity_input, FILTER_VALIDATE_INT) === false) {
+            $this->session->set_flashdata('message', 'Quantity must be a whole number.');
+            redirect('vaccine');
+            return;
+        }
+
+        $quantity = (int) $quantity_input;
+
+        if ($quantity <= 0) {
+            $this->session->set_flashdata('message', 'Quantity must be greater than 0.');
+            redirect('vaccine');
+            return;
+        }
+
+        if (!isset($vaccine['quantity']) || $quantity > (int) $vaccine['quantity']) {
+            $this->session->set_flashdata('message', 'Archive quantity cannot be greater than the available quantity.');
+            redirect('vaccine');
+            return;
+        }
+
+        if ($password === '' || !$this->users->checkPassword($session_id, $password)) {
+            $this->session->set_flashdata('message', 'Super admin password is incorrect.');
+            redirect('vaccine');
+            return;
+        }
+
+        $this->vaccines->archiveVaccine($id, $quantity);
+        $this->session->set_flashdata('message', 'Vaccine quantity updated after archiving.');
+        redirect('vaccine');
+    }
+
     public function addQuantity($id) {
         if (!$this->session->userdata('user_id')) {
             redirect('login');
@@ -160,6 +216,13 @@ class VaccineController extends CI_Controller {
         // Check if user is logged in
         if (!$this->session->userdata('user_id')) {
             redirect('login');
+            return;
+        }
+
+        $vaccine = $this->vaccines->getVaccine($id);
+        if (!$vaccine || (int) $vaccine['deleted'] <= 0) {
+            $this->session->set_flashdata('message', 'No archived quantity found for this vaccine.');
+            redirect('vaccine/archive');
             return;
         }
 

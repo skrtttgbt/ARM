@@ -41,6 +41,7 @@ $route['vaccine/archive'] = 'VaccineController/archive';
 $route['vaccine/view/(:any)'] = 'VaccineController/view/$1';
 $route['vaccine/analyze/(:any)'] = 'VaccineController/analyze/$1';
 $route['vaccine/action/remove/(:any)'] = 'VaccineController/remove/$1';
+$route['vaccine/action/archive/(:any)'] = 'VaccineController/archiveVaccine/$1';
 $route['vaccine/action/add_quantity/(:any)'] = 'VaccineController/addQuantity/$1';
 $route['vaccine/action/retreive/(:any)'] = 'VaccineController/retreive/$1';
 $route['vaccine/action/retrieve/(:any)'] = 'VaccineController/retrieve/$1';

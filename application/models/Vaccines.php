@@ -5,14 +5,14 @@ class Vaccines extends CI_Model {
     
     public function getVaccines()
 	{
-        $query = $this->db->where('deleted', 0)->get('vaccines');
+        $query = $this->db->where('quantity >', 0)->get('vaccines');
 
         return $query->result_array();
 	}
 
     public function getArchives()
 	{
-        $query = $this->db->where('deleted', 1)->get('vaccines');
+        $query = $this->db->where('deleted >', 0)->get('vaccines');
 
         return $query->result_array();
 	}
@@ -139,15 +139,43 @@ class Vaccines extends CI_Model {
     }
 
     public function removeVaccine($id) {
+        $vaccine = $this->getVaccine($id);
+        if (!$vaccine) {
+            return false;
+        }
 
-        $this->db->set('deleted', 1);
+        $this->db->set('deleted', (int) $vaccine['deleted'] + (int) $vaccine['quantity']);
+        $this->db->set('quantity', 0);
+        $this->db->where('id', $id);
+
+        return $this->db->update('vaccines');
+    }
+
+    public function archiveVaccine($id, $quantity) {
+        $vaccine = $this->getVaccine($id);
+        if (!$vaccine) {
+            return false;
+        }
+
+        $current_quantity = (int) $vaccine['quantity'];
+        $archive_quantity = (int) $quantity;
+        $remaining_quantity = max($current_quantity - $archive_quantity, 0);
+        $archived_quantity = (int) $vaccine['deleted'] + $archive_quantity;
+
+        $this->db->set('quantity', $remaining_quantity);
+        $this->db->set('deleted', $archived_quantity);
         $this->db->where('id', $id);
 
         return $this->db->update('vaccines');
     }
 
     public function retreiveVaccine($id) {
+        $vaccine = $this->getVaccine($id);
+        if (!$vaccine) {
+            return false;
+        }
 
+        $this->db->set('quantity', (int) $vaccine['quantity'] + (int) $vaccine['deleted']);
         $this->db->set('deleted', 0);
         $this->db->where('id', $id);
 
@@ -155,7 +183,7 @@ class Vaccines extends CI_Model {
     }
     
     public function getTotalVaccines() {
-        $query = $this->db->where('deleted', 0)->get('vaccines');
+        $query = $this->db->where('quantity >', 0)->get('vaccines');
         
         return $query->num_rows();
     }

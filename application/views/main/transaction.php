@@ -261,12 +261,12 @@
             <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-7 align-self-center">
-                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Incident</h4>
+                        <h4 class="page-title text-truncate text-dark font-weight-medium mb-1">Transaction Logs</h4>
                         <div class="d-flex align-items-center">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb m-0 p-0">
-                                    <li class="breadcrumb-item"><a href="" class="text-muted">Home</a></li>
-                                    <li class="breadcrumb-item text-muted active" aria-current="page">Incident</li>
+                                    <li class="breadcrumb-item"><a href="<?php echo base_url(); ?>dashboard" class="text-muted">Home</a></li>
+                                    <li class="breadcrumb-item text-muted active" aria-current="page">Transaction Logs</li>
                                 </ol>
                             </nav>
                         </div>
@@ -296,85 +296,131 @@
                     </div>
                 <?php endif; ?>
 
-                <div class="btn-group mb-3" role="group" aria-label="Incident Navigation">
-                                    <a href="<?php echo base_url(); ?>incident" class="btn btn-primary active">Incident List</a>
-                                    <a href="<?php echo base_url(); ?>patient" class="btn btn-outline-primary">Select Patient to Create Incident</a>
-                                </div>
-                                <h4 class="card-title">Incidents</h4>
-                <div class="row">
-                    <div class="col-lg-12 ">
-                        <div class="card">
+                <div class="btn-group mb-3" role="group" aria-label="Transaction Navigation">
+                    <a href="<?php echo base_url(); ?>log/transaction" class="btn btn-primary active">Transactions</a>
+                    <a href="<?php echo base_url(); ?>dashboard" class="btn btn-outline-primary">Back to Dashboard</a>
+                </div>
 
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
                             <div class="card-body">
-                                
+                                <h4 class="card-title">Completed Vaccination Schedules</h4>
                                 <div class="table-responsive">
-                                    <table id="default_order"class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                    <table id="completed-schedules-table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
                                         <thead>
                                             <tr>
-                                                <th>Patient Name</th>
+                                                <th>Patient</th>
                                                 <th>Animal Type</th>
-                                                <th>Bite Date</th>
-                                                <th>Status</th>
-                                                <th>Action</th>
+                                                <th>Schedule Date</th>
+                                                <th>Processed By</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                        <?php 
-                                        if(isset($incidents) && $incidents) {
-                                            foreach($incidents as $incident) {
-                                            
-                                            $patient = $this->patients->getPatient($incident['patient_id']);
-                                            ?>
+                                            <?php if (!empty($completed_schedules)): ?>
+                                                <?php foreach ($completed_schedules as $schedule): ?>
+                                                    <tr>
+                                                        <td><?php echo trim(($schedule['patient_first_name'] ?? '') . ' ' . ($schedule['patient_last_name'] ?? '')); ?></td>
+                                                        <td><?php echo $schedule['animal_type'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo $schedule['schedule'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo trim(($schedule['user_fname'] ?? '') . ' ' . ($schedule['user_lname'] ?? '')); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Recent Incidents</h4>
+                                <div class="table-responsive">
+                                    <table id="recent-incidents-table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
                                             <tr>
-                                                <td><?php echo $patient['patient_first_name'] . " " . $patient['patient_last_name']; ?></td>
-                                                <td><?php echo $incident['animal_type']; ?></td>
-                                                <td><?php echo $incident['bite_date']; ?></td>
-                                                <td>
-                                                <?php
-                                                $checkSchedule = $this->incidents->checkSchedule($incident['id']);
-                                                $checkCompletedSchedule = $this->incidents->countCompletedSchedule($incident['id']); 
-                                                if($checkCompletedSchedule == $incident['dose']) {
-                                                ?>
-                                                
-                                                <button class="btn btn-success btn-sm">COMPLETE</button>
-                                                <?php
-                                                } else {
-                                                ?>
-                                                <button class="btn btn-warning btn-sm" style="color:white">ON-GOING</button>
-                                                <?php 
-                                                }
-                                                ?>
-                                                
-                                                
-                                                </td>
-                                                <td>
-                                                <?php
-                                                if($checkCompletedSchedule == $incident['dose']) {
-                                                ?>
-                                                <a class="btn btn-secondary btn-sm">Transaction Complete</a>
-                                                <?php
-                                                } else {
-
-                                                    if($checkSchedule) {
-                                                    ?>
-                                                        <button class="btn btn-secondary btn-sm">SCHEDULED</button>
-                                                    <?php 
-                                                    } else {
-                                                    ?>
-                                                        <a href="<?php echo base_url() . "incident/create_schedule/" . $incident['id']; ?>" class="btn btn-primary btn-sm">Create Schedule</a>
-                                                    <?php  
-                                                    }
-
-                                                
-                                                }
-                                                ?>    
-                                                    
-                                                </td>
+                                                <th>Patient</th>
+                                                <th>Animal Type</th>
+                                                <th>Bite Date</th>
+                                                <th>Created By</th>
                                             </tr>
-                                            <?php
-                                            }
-                                        }
-                                        ?>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($recent_incidents)): ?>
+                                                <?php foreach ($recent_incidents as $incident): ?>
+                                                    <tr>
+                                                        <td><?php echo trim(($incident['patient_first_name'] ?? '') . ' ' . ($incident['patient_last_name'] ?? '')); ?></td>
+                                                        <td><?php echo $incident['animal_type'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo $incident['bite_date'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo trim(($incident['user_fname'] ?? '') . ' ' . ($incident['user_lname'] ?? '')); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <h4 class="card-title">Recent Patient Registrations</h4>
+                                    <table id="recent-patients-table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Mobile</th>
+                                                <th>Created At</th>
+                                                <th>Registered By</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($recent_patients)): ?>
+                                                <?php foreach ($recent_patients as $patient): ?>
+                                                    <tr>
+                                                        <td><?php echo trim(($patient['patient_first_name'] ?? '') . ' ' . ($patient['patient_last_name'] ?? '')); ?></td>
+                                                        <td><?php echo $patient['mobile'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo $patient['created_at'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo trim(($patient['user_fname'] ?? '') . ' ' . ($patient['user_lname'] ?? '')); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">Recent Vaccine Usage</h4>
+                                <div class="table-responsive">
+                                    <table id="recent-vaccinations-table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Vaccine Type</th>
+                                                <th>Schedule Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($recent_vaccinations)): ?>
+                                                <?php foreach ($recent_vaccinations as $vaccination): ?>
+                                                    <tr>
+                                                        <td><?php echo trim(($vaccination['patient_first_name'] ?? '') . ' ' . ($vaccination['patient_last_name'] ?? '')); ?></td>
+                                                        <td><?php echo $vaccination['vaccine_type'] ?? 'N/A'; ?></td>
+                                                        <td><?php echo $vaccination['schedule'] ?? 'N/A'; ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
                                         </tbody>
                                     </table>
                                 </div>
@@ -428,7 +474,10 @@
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $('#default_order').DataTable();
+        $('#completed-schedules-table').DataTable();
+        $('#recent-incidents-table').DataTable();
+        $('#recent-patients-table').DataTable();
+        $('#recent-vaccinations-table').DataTable();
     </script>
 </body>
 

@@ -346,6 +346,9 @@ $CI->load->library('session');
                                                     <td>
                                                         <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a>
                                                         <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
+                                                        <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
+                                                            <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
+                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
@@ -373,6 +376,38 @@ $CI->load->library('session');
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->
                                                 </div><!-- /.modal -->
+                                                <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
+                                                <div id="archive-vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
+                                                    aria-labelledby="archiveVaccineLabel-<?php echo $vaccine['id']; ?>" aria-hidden="true">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h4 class="modal-title" id="archiveVaccineLabel-<?php echo $vaccine['id']; ?>">Archive Vaccine</h4>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                                    aria-hidden="true"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <?php echo form_open(base_url() . "vaccine/action/archive/" . $vaccine['id']); ?>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Quantity to archive</label>
+                                                                        <input type="number" name="quantity" min="1" max="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" value="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" class="form-control" required>
+                                                                        <small class="form-text text-muted">Available quantity: <?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?></small>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Super admin password</label>
+                                                                        <input type="password" name="password" class="form-control" required>
+                                                                    </div>
+                                                                    <div class="modal-footer px-0 pb-0">
+                                                                        <button type="button" class="btn btn-light"
+                                                                            data-bs-dismiss="modal">Close</button>
+                                                                        <button type="submit" class="btn btn-danger">Archive</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <?php endif; ?>
                                                 <?php
                                                 }
                                             }
