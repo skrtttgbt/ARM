@@ -344,7 +344,7 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['amount'];?></td>
                                                     <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
                                                     <td>
-                                                        <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a>
+                                                        <!-- <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a> -->
                                                         <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
                                                         <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
                                                             <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
