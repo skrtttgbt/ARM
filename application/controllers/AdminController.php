@@ -104,7 +104,24 @@ class AdminController extends CI_Controller {
             return;
         }
 
-        $this->users->actionSuspend($id);
+        if (strtoupper($this->input->method()) !== 'POST') {
+            show_error('Invalid request method.', 405);
+            return;
+        }
+
+        $this->form_validation->set_rules('archive_reason', 'Archive Reason', 'trim|required');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->session->set_flashdata('message', validation_errors('', ''));
+            redirect('admin');
+            return;
+        }
+
+        $archive_reason = $this->input->post('archive_reason', TRUE);
+
+        $session_id = $this->session->userdata('user_id');
+
+        $this->users->actionSuspend($id, $archive_reason, $session_id);
         $this->session->set_flashdata('message', 'Admin account has been suspended. A notification has been sent to the admin\'s mobile number.');
 		redirect('admin');
 

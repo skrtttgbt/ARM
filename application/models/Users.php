@@ -6,6 +6,17 @@ use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
 class Users extends CI_Model {
 
+    private $has_archive_reason_column = null;
+
+    private function hasArchiveReasonColumn()
+    {
+        if ($this->has_archive_reason_column === null) {
+            $this->has_archive_reason_column = $this->db->field_exists('archive_reason', 'users');
+        }
+
+        return $this->has_archive_reason_column;
+    }
+
 	public function getUsers()
 	{
         $query = $this->db->get('users');
@@ -84,7 +95,7 @@ class Users extends CI_Model {
 
         $data = array(
         'level' => 1,
-        'status' => 0,
+        'status' => 1,
         'deleted' => 0,
         'image' => "default.png",
         'first_name' => $this->input->post('first_name'),
@@ -207,9 +218,19 @@ class Users extends CI_Model {
 
     public function getArchives() {
 
-        $query = $this->db->where('level', 1)->where('deleted', 1)->get('users');
+        $sql = "SELECT u.*, l.reason AS archive_reason
+                FROM users u
+                LEFT JOIN admin_suspend_logs l
+                    ON l.id = (
+                        SELECT asl.id
+                        FROM admin_suspend_logs asl
+                        WHERE asl.admin_id = u.id
+                        ORDER BY asl.suspended_at DESC, asl.id DESC
+                        LIMIT 1
+                    )
+                WHERE u.level = 1 AND u.deleted = 1";
 
-        return $query->result_array();
+        return $this->db->query($sql)->result_array();
     }
 
     public function generateResetToken($user_id) {
@@ -313,7 +334,7 @@ class Users extends CI_Model {
 
     }
 
-    public function actionSuspend($id) {
+    public function actionSuspend($id, $archive_reason = '', $suspended_by = null) {
 
         $user = $this->getUser($id);
         $phone = normalize_ph_mobile($user['mobile']);
@@ -329,9 +350,21 @@ class Users extends CI_Model {
         }
 
         $this->db->set('deleted', 1);
+        if ($this->hasArchiveReasonColumn()) {
+            $this->db->set('archive_reason', $archive_reason);
+        }
         $this->db->where('id', $id);
 
-        return $this->db->update('users');
+        $updated = $this->db->update('users');
+        if (!$updated) {
+            return false;
+        }
+
+        return $this->db->insert('admin_suspend_logs', array(
+            'admin_id' => (int) $id,
+            'reason' => $archive_reason,
+            'suspended_by' => (int) $suspended_by
+        ));
     }
 
     public function actionActivate($id) {
@@ -350,6 +383,9 @@ class Users extends CI_Model {
         }
 
         $this->db->set('deleted', 0);
+        if ($this->hasArchiveReasonColumn()) {
+            $this->db->set('archive_reason', NULL);
+        }
         $this->db->where('id', $id);
 
         return $this->db->update('users');

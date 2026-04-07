@@ -344,13 +344,17 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['amount'];?></td>
                                                     <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
                                                     <td>
-                                                        <!-- <a href="<?php echo base_url() . "vaccine/view/" . $vaccine['id']; ?>" class="btn btn-info btn-sm">View</a> -->
-                                                        <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
-                                                        <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
-                                                            <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
+                                                        <?php if ((int) $user_info['level'] === 0): ?>
+                                                            <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
+                                                            <?php if ((int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
+                                                                <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
+                                                            <?php endif; ?>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">Admin only</span>
                                                         <?php endif; ?>
                                                     </td>
                                                 </tr>
+                                                <?php if ((int) $user_info['level'] === 0): ?>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
                                                     aria-labelledby="myModalLabel" aria-hidden="true">
                                                     <div class="modal-dialog">
@@ -376,6 +380,7 @@ $CI->load->library('session');
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->
                                                 </div><!-- /.modal -->
+                                                <?php endif; ?>
                                                 <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
                                                 <div id="archive-vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
                                                     aria-labelledby="archiveVaccineLabel-<?php echo $vaccine['id']; ?>" aria-hidden="true">
@@ -392,6 +397,16 @@ $CI->load->library('session');
                                                                         <label class="form-label">Quantity to archive</label>
                                                                         <input type="number" name="quantity" min="1" max="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" value="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" class="form-control" required>
                                                                         <small class="form-text text-muted">Available quantity: <?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?></small>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Archive Reason</label>
+                                                                        <select name="archive_reason" class="form-control" required>
+                                                                            <option value="">Select a reason</option>
+                                                                            <option value="Damaged">Damaged</option>
+                                                                            <option value="Expired">Expired</option>
+                                                                            <option value="Recall">Recall</option>
+                                                                            <option value="Inventory adjustment">Inventory adjustment</option>
+                                                                        </select>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">Super admin password</label>

@@ -344,55 +344,6 @@
                                 <canvas id="monthlyTrendsChart" height="120"></canvas>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-lg-5">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title mb-3">Vial Forecast</h5>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Total Vials</span>
-                                        <strong><?php echo (int) $forecast_data['total_vials']; ?></strong>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Used</span>
-                                        <strong><?php echo (int) $forecast_data['used_vials']; ?></strong>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Available</span>
-                                        <strong><?php echo (int) $forecast_data['available_vials']; ?></strong>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Pending Schedules</span>
-                                        <strong><?php echo (int) $forecast_data['pending_schedules']; ?></strong>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Projected Shortage</span>
-                                        <strong class="text-<?php echo $forecast_data['projected_shortage'] > 0 ? 'danger' : 'success'; ?>">
-                                            <?php echo (int) $forecast_data['projected_shortage']; ?>
-                                        </strong>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <span class="badge badge-<?php echo $forecast_data['stock_status'] === 'critical' ? 'danger' : ($forecast_data['stock_status'] === 'low' ? 'warning' : 'success'); ?>">
-                                        <?php echo ucfirst($forecast_data['stock_status']); ?> Stock Level
-                                    </span>
-                                </div>
-                                <div>
-                                    <?php echo form_open(base_url('dashboard/send_reminders'), 'class="d-inline"'); ?>
-                                        <button type="submit" class="btn btn-primary">Send SMS Reminders</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                         <div class="card">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -406,6 +357,43 @@
                                     </div>
                                 </div>
                                 <canvas id="vaccinePredictionChart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Vaccine Archive Summary</h5>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Used</span>
+                                        <strong><?php echo (int) $vaccine_archive_summary['used_total']; ?></strong>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Damaged</span>
+                                        <strong><?php echo (int) $vaccine_archive_summary['damaged_total']; ?></strong>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Expired</span>
+                                        <strong><?php echo (int) $vaccine_archive_summary['expired_total']; ?></strong>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Recall</span>
+                                        <strong><?php echo (int) $vaccine_archive_summary['recall_total']; ?></strong>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Inventory Adjustment</span>
+                                        <strong><?php echo (int) $vaccine_archive_summary['inventory_adjustment_total']; ?></strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

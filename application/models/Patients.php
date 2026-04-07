@@ -100,12 +100,21 @@ class Patients extends CI_Model {
 
     }
 
-    public function actionSuspend($id) {
+    public function actionSuspend($id, $archive_reason = '', $suspended_by = null) {
 
         $this->db->set('deleted', 1);
         $this->db->where('id', $id);
 
-        return $this->db->update('patients');
+        $updated = $this->db->update('patients');
+        if (!$updated) {
+            return false;
+        }
+
+        return $this->db->insert('patient_suspend_logs', array(
+            'patient_id' => (int) $id,
+            'reason' => $archive_reason,
+            'suspended_by' => (int) $suspended_by
+        ));
     }
 
     public function actionActivate($id) {
@@ -117,9 +126,19 @@ class Patients extends CI_Model {
     }
 
     public function getArchives() {
-        $query = $this->db->where('deleted', 1)->get('patients');
+        $sql = "SELECT p.*, l.reason AS archive_reason
+                FROM patients p
+                LEFT JOIN patient_suspend_logs l
+                    ON l.id = (
+                        SELECT psl.id
+                        FROM patient_suspend_logs psl
+                        WHERE psl.patient_id = p.id
+                        ORDER BY psl.suspended_at DESC, psl.id DESC
+                        LIMIT 1
+                    )
+                WHERE p.deleted = 1";
 
-        return $query->result_array();
+        return $this->db->query($sql)->result_array();
     }
     
     public function getTotalPatients() {

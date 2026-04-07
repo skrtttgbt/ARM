@@ -176,7 +176,23 @@ class PatientController extends CI_Controller {
             return;
         }
 
-        $this->patients->actionSuspend($id);
+        if (strtoupper($this->input->method()) !== 'POST') {
+            show_error('Invalid request method.', 405);
+            return;
+        }
+
+        $this->form_validation->set_rules('archive_reason', 'Archive Reason', 'trim|required');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->session->set_flashdata('message', validation_errors('', ''));
+            redirect('patient');
+            return;
+        }
+
+        $archive_reason = $this->input->post('archive_reason', TRUE);
+        $session_id = $this->session->userdata('user_id');
+
+        $this->patients->actionSuspend($id, $archive_reason, $session_id);
         $this->session->set_flashdata('message', 'Patient has been suspended.');
 		redirect('patient');
 

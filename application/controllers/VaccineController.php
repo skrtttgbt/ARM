@@ -150,6 +150,7 @@ class VaccineController extends CI_Controller {
 
         $quantity_input = trim((string) $this->input->post('quantity'));
         $password = (string) $this->input->post('password');
+        $archive_reason = trim((string) $this->input->post('archive_reason'));
         $vaccine = $this->vaccines->getVaccine($id);
 
         if (!$vaccine) {
@@ -178,13 +179,19 @@ class VaccineController extends CI_Controller {
             return;
         }
 
+        if ($archive_reason === '') {
+            $this->session->set_flashdata('message', 'Archive reason is required.');
+            redirect('vaccine');
+            return;
+        }
+
         if ($password === '' || !$this->users->checkPassword($session_id, $password)) {
             $this->session->set_flashdata('message', 'Super admin password is incorrect.');
             redirect('vaccine');
             return;
         }
 
-        $this->vaccines->archiveVaccine($id, $quantity);
+        $this->vaccines->archiveVaccine($id, $quantity, $archive_reason, $session_id);
         $this->session->set_flashdata('message', 'Vaccine quantity updated after archiving.');
         redirect('vaccine');
     }
@@ -192,6 +199,15 @@ class VaccineController extends CI_Controller {
     public function addQuantity($id) {
         if (!$this->session->userdata('user_id')) {
             redirect('login');
+            return;
+        }
+
+        $session_id = $this->session->userdata('user_id');
+        $user_info = $this->users->getUser($session_id);
+
+        if (!$user_info || (int) $user_info['level'] !== 0) {
+            $this->session->set_flashdata('message', 'Only the super admin can add vaccine quantity.');
+            redirect('vaccine');
             return;
         }
 
@@ -216,6 +232,15 @@ class VaccineController extends CI_Controller {
         // Check if user is logged in
         if (!$this->session->userdata('user_id')) {
             redirect('login');
+            return;
+        }
+
+        $session_id = $this->session->userdata('user_id');
+        $user_info = $this->users->getUser($session_id);
+
+        if (!$user_info || (int) $user_info['level'] !== 0) {
+            $this->session->set_flashdata('message', 'Only the super admin can retrieve archived vaccines.');
+            redirect('vaccine/archive');
             return;
         }
 

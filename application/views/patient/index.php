@@ -364,14 +364,26 @@
                                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                 aria-hidden="true"></button>
                                                         </div>
+                                                        <?php echo form_open(base_url() . "patient/action/suspend/" . $patient['id']); ?>
                                                         <div class="modal-body">
                                                             <p>This action will temporarily suspend this account.</p>
+                                                            <div class="form-group">
+                                                                <label for="archive-reason-patient-<?php echo $patient['id']; ?>" class="form-label">Archive Reason</label>
+                                                                <select name="archive_reason" id="archive-reason-patient-<?php echo $patient['id']; ?>" class="form-control" required>
+                                                                    <option value="">Select a reason</option>
+                                                                    <option value="Completed treatment">Completed treatment</option>
+                                                                    <option value="Inactive account">Inactive account</option>
+                                                                    <option value="Duplicate record">Duplicate record</option>
+                                                                    <option value="Requested by patient">Requested by patient</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                         <div class="modal-footer">
                                                             <button type="button" class="btn btn-light"
                                                                 data-bs-dismiss="modal">Close</button>
-                                                            <a class="btn btn-danger" href="<?php echo base_url() . "patient/action/suspend/" . $patient['id']; ?>">Proceed</a>
+                                                            <button type="submit" class="btn btn-danger">Proceed</button>
                                                         </div>
+                                                        </form>
                                                     </div>
                                                 </div>
                                             </div>

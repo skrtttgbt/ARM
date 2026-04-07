@@ -328,6 +328,11 @@ $CI->load->library('session');
                                                 <th>Type</th>
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
+                                                <th>Used</th>
+                                                <th>Damaged</th>
+                                                <th>Expired</th>
+                                                <th>Recall</th>
+                                                <th>Inventory Adjustment</th>
                                                 <th>Archived Quantity</th>
                                                 <th>Action</th>
                                             </tr>
@@ -343,11 +348,21 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['type'];?></td>
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
+                                                    <td><?php echo isset($vaccine['used_count']) ? (int) $vaccine['used_count'] : 0; ?></td>
+                                                    <td><?php echo isset($vaccine['damaged_count']) ? (int) $vaccine['damaged_count'] : 0; ?></td>
+                                                    <td><?php echo isset($vaccine['expired_count']) ? (int) $vaccine['expired_count'] : 0; ?></td>
+                                                    <td><?php echo isset($vaccine['recall_count']) ? (int) $vaccine['recall_count'] : 0; ?></td>
+                                                    <td><?php echo isset($vaccine['inventory_adjustment_count']) ? (int) $vaccine['inventory_adjustment_count'] : 0; ?></td>
                                                     <td><?php echo isset($vaccine['deleted']) ? $vaccine['deleted'] : 0;?></td>
                                                     <td>
-                                                        <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Retrieve</a>
+                                                        <?php if ((int) $user_info['level'] === 0): ?>
+                                                            <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Retrieve</a>
+                                                        <?php else: ?>
+                                                            <span class="text-muted">Admin only</span>
+                                                        <?php endif; ?>
                                                     </td>
                                                 </tr>
+                                                <?php if ((int) $user_info['level'] === 0): ?>
                                                 <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
                                                     aria-labelledby="myModalLabel" aria-hidden="true">
                                                     <div class="modal-dialog">
@@ -368,6 +383,7 @@ $CI->load->library('session');
                                                         </div><!-- /.modal-content -->
                                                     </div><!-- /.modal-dialog -->
                                                 </div><!-- /.modal -->
+                                                <?php endif; ?>
                                                 <?php
                                                 }
                                             }

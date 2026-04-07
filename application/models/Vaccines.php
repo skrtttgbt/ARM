@@ -12,9 +12,32 @@ class Vaccines extends CI_Model {
 
     public function getArchives()
 	{
-        $query = $this->db->where('deleted >', 0)->get('vaccines');
+        $sql = "SELECT
+                    v.*,
+                    COALESCE(usage_stats.used_count, 0) AS used_count,
+                    COALESCE(log_stats.damaged_count, 0) AS damaged_count,
+                    COALESCE(log_stats.expired_count, 0) AS expired_count,
+                    COALESCE(log_stats.recall_count, 0) AS recall_count,
+                    COALESCE(log_stats.inventory_adjustment_count, 0) AS inventory_adjustment_count
+                FROM vaccines v
+                LEFT JOIN (
+                    SELECT vaccine_id, COUNT(*) AS used_count
+                    FROM vials
+                    GROUP BY vaccine_id
+                ) usage_stats ON usage_stats.vaccine_id = v.id
+                LEFT JOIN (
+                    SELECT
+                        vaccine_id,
+                        SUM(CASE WHEN LOWER(TRIM(reason)) IN ('damaged', 'damaged vial') THEN quantity_archived ELSE 0 END) AS damaged_count,
+                        SUM(CASE WHEN LOWER(TRIM(reason)) IN ('expired', 'expired stock') THEN quantity_archived ELSE 0 END) AS expired_count,
+                        SUM(CASE WHEN LOWER(TRIM(reason)) IN ('recall', 'recall from supplier') THEN quantity_archived ELSE 0 END) AS recall_count,
+                        SUM(CASE WHEN LOWER(TRIM(reason)) = 'inventory adjustment' THEN quantity_archived ELSE 0 END) AS inventory_adjustment_count
+                    FROM vaccine_archive_logs
+                    GROUP BY vaccine_id
+                ) log_stats ON log_stats.vaccine_id = v.id
+                WHERE v.deleted > 0";
 
-        return $query->result_array();
+        return $this->db->query($sql)->result_array();
 	}
     
     public function getVaccine($id) 
@@ -151,7 +174,7 @@ class Vaccines extends CI_Model {
         return $this->db->update('vaccines');
     }
 
-    public function archiveVaccine($id, $quantity) {
+    public function archiveVaccine($id, $quantity, $archive_reason = '', $archived_by = null) {
         $vaccine = $this->getVaccine($id);
         if (!$vaccine) {
             return false;
@@ -165,8 +188,18 @@ class Vaccines extends CI_Model {
         $this->db->set('quantity', $remaining_quantity);
         $this->db->set('deleted', $archived_quantity);
         $this->db->where('id', $id);
+        $updated = $this->db->update('vaccines');
 
-        return $this->db->update('vaccines');
+        if (!$updated) {
+            return false;
+        }
+
+        return $this->db->insert('vaccine_archive_logs', array(
+            'vaccine_id' => (int) $id,
+            'quantity_archived' => $archive_quantity,
+            'reason' => $archive_reason,
+            'archived_by' => (int) $archived_by
+        ));
     }
 
     public function retreiveVaccine($id) {

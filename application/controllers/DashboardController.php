@@ -61,6 +61,7 @@ class DashboardController extends CI_Controller {
         $data['total_vials'] = $this->vials->getTotalVials();
         $data['forecast_data'] = $this->getVialForecastData();
         $data['vaccine_forecast_data'] = $this->getVaccineForecastData();
+        $data['vaccine_archive_summary'] = $this->getVaccineArchiveSummary();
         $data['chart_data'] = $this->getChartData();
         
         $this->load->view('main/dashboard', $data);
@@ -299,6 +300,29 @@ class DashboardController extends CI_Controller {
             'chart_prediction' => $chart_prediction,
             'chart_vaxirab' => $chart_vaxirab,
             'chart_speeda' => $chart_speeda
+        ];
+    }
+
+    private function getVaccineArchiveSummary()
+    {
+        $used_query = $this->db->select('COUNT(*) AS total_used', false)->get('vials')->row_array();
+        $used_total = isset($used_query['total_used']) ? (int) $used_query['total_used'] : 0;
+
+        $log_query = $this->db->query("
+            SELECT
+                SUM(CASE WHEN LOWER(TRIM(reason)) IN ('damaged', 'damaged vial') THEN quantity_archived ELSE 0 END) AS damaged_total,
+                SUM(CASE WHEN LOWER(TRIM(reason)) IN ('expired', 'expired stock') THEN quantity_archived ELSE 0 END) AS expired_total,
+                SUM(CASE WHEN LOWER(TRIM(reason)) IN ('recall', 'recall from supplier') THEN quantity_archived ELSE 0 END) AS recall_total,
+                SUM(CASE WHEN LOWER(TRIM(reason)) = 'inventory adjustment' THEN quantity_archived ELSE 0 END) AS inventory_adjustment_total
+            FROM vaccine_archive_logs
+        ")->row_array();
+
+        return [
+            'used_total' => $used_total,
+            'damaged_total' => isset($log_query['damaged_total']) ? (int) $log_query['damaged_total'] : 0,
+            'expired_total' => isset($log_query['expired_total']) ? (int) $log_query['expired_total'] : 0,
+            'recall_total' => isset($log_query['recall_total']) ? (int) $log_query['recall_total'] : 0,
+            'inventory_adjustment_total' => isset($log_query['inventory_adjustment_total']) ? (int) $log_query['inventory_adjustment_total'] : 0
         ];
     }
     

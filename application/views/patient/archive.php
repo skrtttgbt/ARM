@@ -317,6 +317,7 @@
                                                 <th>Height</th>
                                                 <th>Weight</th>
                                                 <th>PhilHealth</th>
+                                                <th>Archive Reason</th>
                                                 <th>Date Registered</th>
                                                 <th>Action</th>
                                             </tr>
@@ -338,6 +339,7 @@
                                                         <i class="fas fa-address-card"></i> INFO
                                                     </button>
                                                 </td>
+                                                <td><?php echo !empty($patient['archive_reason']) ? $patient['archive_reason'] : 'N/A'; ?></td>
                                                 <td><?php echo $patient['created_at']; ?></td>
                                                 <td>
                                                     <div class="btn-group">
