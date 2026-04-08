@@ -23,7 +23,19 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-$config['base_url'] = 'http://localhost/PetVax/';
+$is_https = (
+	isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off'
+)
+	|| (isset($_SERVER['SERVER_PORT']) && (string) $_SERVER['SERVER_PORT'] === '443')
+	|| (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+$script_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+$script_dir = rtrim($script_dir, '/');
+$base_path = ($script_dir === '' || $script_dir === '.') ? '/' : $script_dir . '/';
+
+$config['base_url'] = isset($_SERVER['HTTP_HOST'])
+	? (($is_https ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . $base_path)
+	: 'http://localhost/PetVax/';
 
 /*
 |--------------------------------------------------------------------------

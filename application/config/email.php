@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------
-| SMTP / PHPMailer Settings
+| SMTP / PHPMailer SettingsI
 | -------------------------------------------------------------------
 | Update these values with your email provider credentials.
 */

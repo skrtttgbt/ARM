@@ -3,6 +3,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Patients extends CI_Model {
 
+    private $has_suspend_logs_table = null;
+
+    private function hasSuspendLogsTable()
+    {
+        if ($this->has_suspend_logs_table === null) {
+            $this->has_suspend_logs_table = $this->db->table_exists('patient_suspend_logs');
+        }
+
+        return $this->has_suspend_logs_table;
+    }
+
     public function getPatients()
 	{
         $query = $this->db->where('deleted', 0)->get('patients');
@@ -110,6 +121,11 @@ class Patients extends CI_Model {
             return false;
         }
 
+        if (!$this->hasSuspendLogsTable()) {
+            log_message('error', 'patient_suspend_logs table is missing. Archive reason was not saved for patient ID: ' . (int) $id);
+            return true;
+        }
+
         return $this->db->insert('patient_suspend_logs', array(
             'patient_id' => (int) $id,
             'reason' => $archive_reason,
@@ -126,6 +142,14 @@ class Patients extends CI_Model {
     }
 
     public function getArchives() {
+        if (!$this->hasSuspendLogsTable()) {
+            return $this->db
+                ->select("patients.*, '' AS archive_reason", false)
+                ->where('deleted', 1)
+                ->get('patients')
+                ->result_array();
+        }
+
         $sql = "SELECT p.*, l.reason AS archive_reason
                 FROM patients p
                 LEFT JOIN patient_suspend_logs l
