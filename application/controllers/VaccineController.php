@@ -26,6 +26,7 @@ class VaccineController extends CI_Controller {
     public $vials;
     public $incidents;
     public $schedules;
+    public $vaccine_batches;
 
     public function __construct() {
 
@@ -35,6 +36,7 @@ class VaccineController extends CI_Controller {
         $this->load->model('Users');
         $this->load->model('Vaccines');
         $this->load->model('Vials');
+        $this->load->model('Vaccine_batches', 'vaccine_batches');
         $this->load->library('session');
         $this->load->helper('url');
         $this->load->library('form_validation');
@@ -52,6 +54,7 @@ class VaccineController extends CI_Controller {
 
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vaccines'] = $this->vaccines->getVaccines();
+        $data['expiring_batches'] = $this->vaccine_batches->getExpiringBatches();
 
         $this->load->view('vaccine/index', $data);
     }
@@ -212,6 +215,8 @@ class VaccineController extends CI_Controller {
         }
 
         $quantity = (int) $this->input->post('quantity');
+        $manufacture_date = trim((string) $this->input->post('manufacture_date'));
+        $expiration_date = trim((string) $this->input->post('expiration_date'));
 
         if ($quantity <= 0) {
             $this->session->set_flashdata('message', 'Quantity must be greater than 0.');
@@ -219,9 +224,41 @@ class VaccineController extends CI_Controller {
             return;
         }
 
+        if (!$this->isValidDateValue($manufacture_date) || !$this->isValidDateValue($expiration_date)) {
+            $this->session->set_flashdata('message', 'Manufacture date and expiration date are required.');
+            redirect('vaccine');
+            return;
+        }
+
+        if (strtotime($expiration_date) <= strtotime($manufacture_date)) {
+            $this->session->set_flashdata('message', 'Expiration date must be later than the manufacture date.');
+            redirect('vaccine');
+            return;
+        }
+
+        $this->db->trans_start();
         $this->vaccines->addQuantity($id, $quantity);
+        $this->vaccine_batches->addBatch($id, $session_id, $quantity, $manufacture_date, $expiration_date);
+        $this->db->trans_complete();
+
+        if (!$this->db->trans_status()) {
+            $this->session->set_flashdata('message', 'Unable to add quantity right now.');
+            redirect('vaccine');
+            return;
+        }
+
         $this->session->set_flashdata('message', 'Quantity added successfully.');
         redirect('vaccine');
+    }
+
+    private function isValidDateValue($date)
+    {
+        if ($date === '') {
+            return false;
+        }
+
+        $timestamp = strtotime($date);
+        return $timestamp !== false && date('Y-m-d', $timestamp) === $date;
     }
 
     public function retreive($id) {
@@ -273,7 +310,8 @@ class VaccineController extends CI_Controller {
     }
     
     private function getVaccineForecastData() {
-        $history_months = 12;
+        $start_date = new DateTimeImmutable('2021-01-01');
+        $current_month = new DateTimeImmutable(date('Y-m-01'));
         $forecast_months = 3;
         $month_keys = [];
         $month_labels = [];
@@ -281,13 +319,16 @@ class VaccineController extends CI_Controller {
         $vaxirab_actual = [];
         $speeda_actual = [];
 
-        for ($i = $history_months - 1; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i months"));
+        $cursor = $start_date;
+        while ($cursor <= $current_month) {
+            $date = $cursor->format('Y-m');
             $month_keys[] = $date;
-            $month_labels[] = date('M Y', strtotime($date . '-01'));
+            $month_labels[] = $cursor->format('M Y');
             $overall_actual[] = 0;
             $vaxirab_actual[] = 0;
             $speeda_actual[] = 0;
+
+            $cursor = $cursor->modify('+1 month');
         }
 
         $this->db->select("
@@ -329,16 +370,37 @@ class VaccineController extends CI_Controller {
             $speeda_actual[] = null;
         }
 
+        $prediction_start_index = 0;
+        foreach ($month_keys as $index => $month_key) {
+            if ($month_key >= '2022-01') {
+                $prediction_start_index = $index;
+                break;
+            }
+        }
+
+        $chart_prediction = [];
+        foreach (array_slice($overall_prediction, 0, count($month_keys)) as $index => $value) {
+            $chart_prediction[] = $index >= $prediction_start_index ? $value : null;
+        }
+
+        while (count($chart_prediction) < count($month_keys)) {
+            $chart_prediction[] = null;
+        }
+
+        for ($i = count($month_keys); $i < count($overall_prediction); $i++) {
+            $chart_prediction[] = $overall_prediction[$i];
+        }
+
         return [
             'months' => $month_labels,
             'overall_actual' => $overall_actual,
-            'overall_prediction' => $overall_prediction,
+            'overall_prediction' => $chart_prediction,
             'vaxirab_actual' => $vaxirab_actual,
             'vaxirab_prediction' => $vaxirab_prediction,
             'speeda_actual' => $speeda_actual,
             'speeda_prediction' => $speeda_prediction,
             'predicted_next_month' => end($overall_prediction),
-            'average_monthly_usage' => round(array_sum(array_filter($overall_actual, 'is_numeric')) / max(1, $history_months), 2),
+            'average_monthly_usage' => round(array_sum(array_filter($overall_actual, 'is_numeric')) / max(1, count($month_keys)), 2),
             'vaxirab_total' => array_sum(array_filter($vaxirab_actual, 'is_numeric')),
             'speeda_total' => array_sum(array_filter($speeda_actual, 'is_numeric'))
         ];

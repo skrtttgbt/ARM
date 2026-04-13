@@ -332,13 +332,111 @@
                 </div>
 
                 <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card border-start border-warning border-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">Nearest Vaccine Expiry</h5>
+                                        <p class="text-muted mb-0">Upcoming box expirations based on stock batches</p>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Vaccine</th>
+                                                <th>Boxes Left</th>
+                                                <th>Expiration Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($expiring_batches)): ?>
+                                                <?php foreach ($expiring_batches as $batch): ?>
+                                                    <?php
+                                                    $days_to_expiry = (int) floor((strtotime($batch['expiration_date']) - strtotime(date('Y-m-d'))) / 86400);
+                                                    $expiry_status = 'OK';
+                                                    $expiry_class = 'success';
+
+                                                    if ($days_to_expiry < 0) {
+                                                        $expiry_status = 'Expired';
+                                                        $expiry_class = 'danger';
+                                                    } elseif ($days_to_expiry <= 30) {
+                                                        $expiry_status = 'Expiring soon';
+                                                        $expiry_class = 'warning';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($batch['vaccine_name']); ?></td>
+                                                        <td><?php echo (int) $batch['quantity_remaining']; ?></td>
+                                                        <td><?php echo date('M j, Y', strtotime($batch['expiration_date'])); ?></td>
+                                                        <td><span class="badge bg-<?php echo $expiry_class; ?>"><?php echo $expiry_status; ?></span></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">No dated vaccine batches available yet.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Vaccine Patient Progress</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Vaccine</th>
+                                                <th>Boxes Left</th>
+                                                <th>Dose Qty</th>
+                                                <th>Box Quantity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($vaccines)): ?>
+                                                <?php foreach ($vaccines as $vaccine): ?>
+                                                    <?php
+                                                    $dose_amount = 3;
+                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $dose_amount;
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($vaccine['name']); ?></td>
+                                                        <td><?php echo (int) $vaccine['quantity']; ?></td>
+                                                        <td><?php echo $dose_amount; ?></td>
+                                                        <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $dose_amount; ?></span></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">No vaccine stock available.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
                     <div class="col-lg-7">
                         <div class="card">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <h5 class="card-title mb-1">Incident Trend and Prediction</h5>
-                                        <p class="text-muted mb-0">Actual vs SARIMA-predicted incidents for the last 24 months</p>
+                                        <p class="text-muted mb-0">Actual data from 2021 to present, with prediction starting in 2022</p>
                                     </div>
                                 </div>
                                 <canvas id="monthlyTrendsChart" height="120"></canvas>
@@ -349,7 +447,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <h5 class="card-title mb-1">Vaccine Prediction for Next Month</h5>
-                                        <p class="text-muted mb-0">Last 6 months plus predicted next month</p>
+                                        <p class="text-muted mb-0">Actual vaccine data from 2021 to present, with prediction starting in 2022</p>
                                     </div>
                                     <div class="text-end">
                                         <div class="fw-bold"><?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?></div>
@@ -489,7 +587,7 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Actual vs SARIMA Predicted Incidents - Last 24 Months'
+                            text: 'Actual vs SARIMA Predicted Incidents - 2021 to Present'
                         },
                         legend: {
                             position: 'top'

@@ -2,12 +2,54 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Vaccines extends CI_Model {
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ensureBatchTableExists();
+    }
+
+    private function ensureBatchTableExists()
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS `vaccine_batches` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `vaccine_id` INT(11) NOT NULL,
+            `user_id` INT(11) NOT NULL,
+            `quantity_added` INT(11) NOT NULL DEFAULT 0,
+            `quantity_remaining` INT(11) NOT NULL DEFAULT 0,
+            `manufacture_date` DATE NOT NULL,
+            `expiration_date` DATE NOT NULL,
+            `updated_at` INT(11) NOT NULL,
+            `created_at` VARCHAR(50) NOT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_vaccine_batches_vaccine_id` (`vaccine_id`),
+            KEY `idx_vaccine_batches_expiration_date` (`expiration_date`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        $this->db->query($sql);
+    }
     
     public function getVaccines()
 	{
-        $query = $this->db->where('quantity >', 0)->get('vaccines');
+        $sql = "SELECT
+                    v.*,
+                    batch_stats.nearest_expiration_date,
+                    COALESCE(usage_stats.used_count, 0) AS used_count
+                FROM vaccines v
+                LEFT JOIN (
+                    SELECT vaccine_id, COUNT(*) AS used_count
+                    FROM vials
+                    GROUP BY vaccine_id
+                ) usage_stats ON usage_stats.vaccine_id = v.id
+                LEFT JOIN (
+                    SELECT vaccine_id, MIN(expiration_date) AS nearest_expiration_date
+                    FROM vaccine_batches
+                    WHERE quantity_remaining > 0
+                    GROUP BY vaccine_id
+                ) batch_stats ON batch_stats.vaccine_id = v.id
+                WHERE v.quantity > 0 OR v.deleted = 0";
 
-        return $query->result_array();
+        return $this->db->query($sql)->result_array();
 	}
 
     public function getArchives()
@@ -83,6 +125,13 @@ class Vaccines extends CI_Model {
         $this->db->where('id', $id);
 
         return $this->db->update('vaccines');
+    }
+
+    public function getUsedDoseCount($id)
+    {
+        return (int) $this->db
+            ->where('vaccine_id', $id)
+            ->count_all_results('vials');
     }
 
     public function createVaccine() {

@@ -26,6 +26,7 @@ class DashboardController extends CI_Controller {
     public $vaccines;
     public $vials;
     public $schedules;
+    public $vaccine_batches;
 
     public function __construct()
     {
@@ -51,6 +52,7 @@ class DashboardController extends CI_Controller {
         $this->load->model('Schedules');
         $this->load->model('Vaccines');
         $this->load->model('Vials');
+        $this->load->model('Vaccine_batches', 'vaccine_batches');
 
         // Load the dashboard content
         $data['user_info'] = $this->users->getUser($session_id);
@@ -59,9 +61,11 @@ class DashboardController extends CI_Controller {
         $data['total_schedules_today'] = $this->schedules->getTodaySchedulesCount();
         $data['total_vaccines'] = $this->vaccines->getTotalVaccines();
         $data['total_vials'] = $this->vials->getTotalVials();
+        $data['vaccines'] = $this->vaccines->getVaccines();
         $data['forecast_data'] = $this->getVialForecastData();
         $data['vaccine_forecast_data'] = $this->getVaccineForecastData();
         $data['vaccine_archive_summary'] = $this->getVaccineArchiveSummary();
+        $data['expiring_batches'] = $this->vaccine_batches->getExpiringBatches(5);
         $data['chart_data'] = $this->getChartData();
         
         $this->load->view('main/dashboard', $data);
@@ -222,7 +226,8 @@ class DashboardController extends CI_Controller {
 
     private function getVaccineForecastData()
     {
-        $history_months = 12;
+        $start_date = new DateTimeImmutable('2021-01-01');
+        $current_month = new DateTimeImmutable(date('Y-m-01'));
         $forecast_months = 1;
         $month_keys = [];
         $month_labels = [];
@@ -230,13 +235,16 @@ class DashboardController extends CI_Controller {
         $vaxirab_actual = [];
         $speeda_actual = [];
 
-        for ($i = $history_months - 1; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i months"));
+        $cursor = $start_date;
+        while ($cursor <= $current_month) {
+            $date = $cursor->format('Y-m');
             $month_keys[] = $date;
-            $month_labels[] = date('M Y', strtotime($date . '-01'));
+            $month_labels[] = $cursor->format('M Y');
             $overall_actual[] = 0;
             $vaxirab_actual[] = 0;
             $speeda_actual[] = 0;
+
+            $cursor = $cursor->modify('+1 month');
         }
 
         $this->db->select("
@@ -276,7 +284,7 @@ class DashboardController extends CI_Controller {
         $prediction_start_index = 0;
 
         foreach ($month_keys as $index => $month_key) {
-            if (substr($month_key, 5, 2) === '10') {
+            if ($month_key >= '2022-01') {
                 $prediction_start_index = $index;
                 break;
             }
@@ -284,7 +292,9 @@ class DashboardController extends CI_Controller {
 
         $chart_prediction = [];
         foreach ($overall_actual as $index => $value) {
-            $chart_prediction[] = $index >= $prediction_start_index ? $value : null;
+            $chart_prediction[] = ($index >= $prediction_start_index && isset($overall_prediction[$index]))
+                ? $overall_prediction[$index]
+                : null;
         }
         $chart_prediction[] = end($overall_prediction);
 
@@ -327,15 +337,18 @@ class DashboardController extends CI_Controller {
     }
     
     private function getChartData() {
-        $history_months = 24;
-        $forecast_months = 3;
+        $start_date = new DateTimeImmutable('2021-01-01');
+        $current_month = new DateTimeImmutable(date('Y-m-01'));
+        $forecast_months = 1;
         $months = [];
+        $month_keys = [];
         $incident_counts = [];
 
-        for ($i = $history_months - 1; $i >= 0; $i--) {
-            $date = date('Y-m', strtotime("-$i months"));
-            $year = substr($date, 0, 4);
-            $month = substr($date, 5, 2);
+        $cursor = $start_date;
+        while ($cursor <= $current_month) {
+            $date = $cursor->format('Y-m');
+            $year = $cursor->format('Y');
+            $month = $cursor->format('m');
 
             $this->db->select('COUNT(*) as count');
             $this->db->from('incidents');
@@ -344,12 +357,30 @@ class DashboardController extends CI_Controller {
             $this->db->where("MONTH(STR_TO_DATE(created_at, '%M %e, %Y')) = {$month}", null, false);
             $result = $this->db->get()->row();
 
-            $months[] = date('M Y', strtotime($date));
+            $month_keys[] = $date;
+            $months[] = $cursor->format('M Y');
             $incident_counts[] = $result ? (int)$result->count : 0;
+
+            $cursor = $cursor->modify('+1 month');
         }
 
         $actual_series = $incident_counts;
         $prediction_series = $this->buildSarimaPredictionSeries($incident_counts, $forecast_months);
+        $prediction_start_index = 0;
+
+        foreach ($month_keys as $index => $month_key) {
+            if ($month_key >= '2022-01') {
+                $prediction_start_index = $index;
+                break;
+            }
+        }
+
+        $chart_prediction = [];
+        foreach ($incident_counts as $index => $value) {
+            $chart_prediction[] = ($index >= $prediction_start_index && isset($prediction_series[$index]))
+                ? $prediction_series[$index]
+                : null;
+        }
 
         for ($i = 1; $i <= $forecast_months; $i++) {
             $future_date = date('Y-m', strtotime("+$i months"));
@@ -357,10 +388,12 @@ class DashboardController extends CI_Controller {
             $actual_series[] = null;
         }
 
+        $chart_prediction[] = end($prediction_series);
+
         return [
             'months' => $months,
             'incident_counts' => $actual_series,
-            'predicted_incident_counts' => $prediction_series
+            'predicted_incident_counts' => $chart_prediction
         ];
     }
 

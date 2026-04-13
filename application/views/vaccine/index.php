@@ -328,6 +328,9 @@ $CI->load->library('session');
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
                                                 <th>Quantity</th>
+                                                <th>Patient Progress</th>
+                                                <th>Nearest Expiry</th>
+                                                <th>Expiry Status</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -337,12 +340,38 @@ $CI->load->library('session');
                                                 foreach($vaccines as $vaccine){
                                                 ?>
                                                 <tr>
+                                                    <?php
+                                                    $nearest_expiration = !empty($vaccine['nearest_expiration_date']) ? $vaccine['nearest_expiration_date'] : '';
+                                                    $days_to_expiry = $nearest_expiration !== '' ? (int) floor((strtotime($nearest_expiration) - strtotime(date('Y-m-d'))) / 86400) : null;
+                                                    $dose_amount = 3;
+                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $dose_amount;
+                                                    $expiry_label = 'No batch date';
+                                                    $expiry_class = 'secondary';
+
+                                                    if ($nearest_expiration !== '') {
+                                                        if ($days_to_expiry < 0) {
+                                                            $expiry_label = 'Expired';
+                                                            $expiry_class = 'danger';
+                                                        } elseif ($days_to_expiry <= 30) {
+                                                            $expiry_label = 'Expiring soon';
+                                                            $expiry_class = 'warning';
+                                                        } else {
+                                                            $expiry_label = 'OK';
+                                                            $expiry_class = 'success';
+                                                        }
+                                                    }
+                                                    ?>
                                                     <td><?php echo $vaccine['barcode'];?></td>
                                                     <td><?php echo $vaccine['name'];?></td>
                                                     <td><?php echo $vaccine['type'];?></td>
                                                     <td><?php echo $vaccine['capacity'];?></td>
                                                     <td><?php echo $vaccine['amount'];?></td>
                                                     <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
+                                                    <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $dose_amount; ?></span></td>
+                                                    <td>
+                                                        <?php echo $nearest_expiration !== '' ? date('M j, Y', strtotime($nearest_expiration)) : '<span class="text-muted">Not set</span>';?>
+                                                    </td>
+                                                    <td><span class="badge bg-<?php echo $expiry_class; ?>"><?php echo $expiry_label; ?></span></td>
                                                     <td>
                                                         <?php if ((int) $user_info['level'] === 0): ?>
                                                             <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
@@ -369,6 +398,14 @@ $CI->load->library('session');
                                                                     <div class="mb-3">
                                                                         <label class="form-label">Quantity to add</label>
                                                                         <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Manufacture Date</label>
+                                                                        <input type="date" name="manufacture_date" class="form-control" required>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Expiration Date</label>
+                                                                        <input type="date" name="expiration_date" class="form-control" required>
                                                                     </div>
                                                                     <div class="modal-footer px-0 pb-0">
                                                                         <button type="button" class="btn btn-light"
@@ -434,6 +471,61 @@ $CI->load->library('session');
                         </div>
                     </div>
                     <!-- column -->
+                </div>
+
+                <h4 class="card-title mt-4">Expiration List</h4>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Vaccine</th>
+                                                <th>Barcode</th>
+                                                <th>Boxes Remaining</th>
+                                                <th>Manufacture Date</th>
+                                                <th>Expiration Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($expiring_batches)): ?>
+                                                <?php foreach ($expiring_batches as $batch): ?>
+                                                    <?php
+                                                    $days_to_expiry = (int) floor((strtotime($batch['expiration_date']) - strtotime(date('Y-m-d'))) / 86400);
+                                                    $batch_status = 'OK';
+                                                    $batch_class = 'success';
+
+                                                    if ($days_to_expiry < 0) {
+                                                        $batch_status = 'Expired';
+                                                        $batch_class = 'danger';
+                                                    } elseif ($days_to_expiry <= 30) {
+                                                        $batch_status = 'Expiring soon';
+                                                        $batch_class = 'warning';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo $batch['vaccine_name']; ?></td>
+                                                        <td><?php echo $batch['vaccine_barcode']; ?></td>
+                                                        <td><?php echo (int) $batch['quantity_remaining']; ?></td>
+                                                        <td><?php echo date('M j, Y', strtotime($batch['manufacture_date'])); ?></td>
+                                                        <td><?php echo date('M j, Y', strtotime($batch['expiration_date'])); ?></td>
+                                                        <td><span class="badge bg-<?php echo $batch_class; ?>"><?php echo $batch_status; ?></span></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">No expiration batches recorded yet.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- ============================================================== -->

@@ -51,7 +51,7 @@
                     </div>
                 <?php endif; ?>
 
-                <?php echo form_open(base_url() . 'login'); ?>
+                <?php echo form_open('login'); ?>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" name="email" id="email" class="form-control" value="<?php echo set_value('email'); ?>" required>
@@ -60,7 +60,7 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label for="password" class="form-label mb-0">Password</label>
-                            <a href="<?php echo base_url(); ?>forgot_password" class="small text-decoration-none">Forgot password?</a>
+                            <a href="<?php echo site_url('forgot_password'); ?>" class="small text-decoration-none">Forgot password?</a>
                         </div>
                         <input type="password" name="password" id="password" class="form-control" required>
                     </div>
