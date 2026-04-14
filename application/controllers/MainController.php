@@ -2,6 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class MainController extends CI_Controller {
+    private const OTP_RESEND_COOLDOWN = 60;
 
     // Declare properties to avoid PHP 8.2 deprecation warnings
     public $benchmark;
@@ -90,109 +91,114 @@ class MainController extends CI_Controller {
 
     public function forgot_password() 
     {
-        // If form is submitted
-        if(isset($_POST['resetBtn'])) {
-            // Set validation rules
+        $data = array(
+            'step' => 'request',
+            'error_message' => '',
+            'success_message' => '',
+            'email' => '',
+            'resend_seconds_remaining' => 0
+        );
+
+        if ($this->input->method() !== 'post') {
+            $this->load->view('main/forgot_password', $data);
+            return;
+        }
+
+        $action = (string) $this->input->post('action');
+        $email = trim((string) $this->input->post('email'));
+        $data['email'] = $email;
+        $data['resend_seconds_remaining'] = $this->getOtpResendSecondsRemaining($email);
+
+        if ($action === 'send_otp') {
             $this->form_validation->set_rules('email', 'Email', 'required|valid_email');
-            
-            if ($this->form_validation->run() == FALSE) {
-                // Validation failed, show form with errors
-                $data = array();
+
+            if ($this->form_validation->run() === FALSE) {
                 $data['error_message'] = validation_errors();
                 $this->load->view('main/forgot_password', $data);
-            } else {
-                // Validation passed, check if email exists
-                $email = $this->input->post('email');
-                $user = $this->users->getUserByEmail($email);
-                
-                if($user) {
-                    // User exists, generate reset token and send via SMS
-                    if($this->users->resetPassword($email)) {
-                        // Show success message
-                        $data = array();
-                        $data['success_message'] = 'Password reset instructions have been sent to your mobile phone.';
-                        $this->load->view('main/forgot_password', $data);
-                    } else {
-                        // Password reset failed
-                        $data = array();
-                        $data['error_message'] = 'Failed to process password reset. Please try again.';
-                        $this->load->view('main/forgot_password', $data);
-                    }
-                } else {
-                    // User doesn't exist
-                    $data = array();
-                    $data['error_message'] = 'No account found with that email address.';
-                    $this->load->view('main/forgot_password', $data);
-                }
+                return;
             }
-        } else {
-            // Show the forgot password form
-            $this->load->view('main/forgot_password');
+
+            if ($data['resend_seconds_remaining'] > 0) {
+                $data['step'] = 'verify';
+                $data['error_message'] = 'Please wait ' . $data['resend_seconds_remaining'] . ' seconds before resending OTP.';
+                $this->load->view('main/forgot_password', $data);
+                return;
+            }
+
+            if ($this->users->createPasswordResetOtp($email)) {
+                $data['step'] = 'verify';
+                $this->setOtpResendCooldown($email);
+                $data['resend_seconds_remaining'] = self::OTP_RESEND_COOLDOWN;
+                $data['success_message'] = 'A reset OTP has been sent to the mobile number linked to this account.';
+            } else {
+                $data['error_message'] = 'Unable to send OTP. Please make sure the email exists and has a valid mobile number.';
+            }
+
+            $this->load->view('main/forgot_password', $data);
+            return;
         }
+
+        if ($action === 'verify_otp') {
+            $data['step'] = 'verify';
+            $otp = trim((string) $this->input->post('otp'));
+
+            $this->form_validation->set_rules('email', 'Email', 'required|valid_email');
+            $this->form_validation->set_rules('otp', 'OTP', 'required|numeric|exact_length[6]');
+            $this->form_validation->set_rules('new_password', 'New Password', 'required|min_length[6]');
+            $this->form_validation->set_rules('confirm_password', 'Confirm New Password', 'required|matches[new_password]');
+
+            if ($this->form_validation->run() === FALSE) {
+                $data['error_message'] = validation_errors();
+                $this->load->view('main/forgot_password', $data);
+                return;
+            }
+
+            if ($this->users->resetPasswordWithOtp($email, $otp, (string) $this->input->post('new_password'))) {
+                $this->load->view('main/password_reset_success');
+                return;
+            }
+
+            $data['error_message'] = 'Invalid or expired OTP. Please request a new code and try again.';
+            $this->load->view('main/forgot_password', $data);
+            return;
+        }
+
+        $data['error_message'] = 'Invalid password reset request.';
+        $this->load->view('main/forgot_password', $data);
+    }
+
+    private function getOtpResendSecondsRemaining($email)
+    {
+        $email = strtolower(trim((string) $email));
+        if ($email === '') {
+            return 0;
+        }
+
+        $otp_resend_cooldowns = (array) $this->session->userdata('otp_resend_cooldowns');
+        $last_sent_at = isset($otp_resend_cooldowns[$email]) ? (int) $otp_resend_cooldowns[$email] : 0;
+        if ($last_sent_at <= 0) {
+            return 0;
+        }
+
+        $seconds_remaining = self::OTP_RESEND_COOLDOWN - (time() - $last_sent_at);
+        return max(0, $seconds_remaining);
+    }
+
+    private function setOtpResendCooldown($email)
+    {
+        $email = strtolower(trim((string) $email));
+        if ($email === '') {
+            return;
+        }
+
+        $otp_resend_cooldowns = (array) $this->session->userdata('otp_resend_cooldowns');
+        $otp_resend_cooldowns[$email] = time();
+        $this->session->set_userdata('otp_resend_cooldowns', $otp_resend_cooldowns);
     }
 
     public function reset_password() 
     {
-        // Get token and email from GET parameters
-        $token = $this->input->get('token');
-        $email = $this->input->get('email');
-        
-        // If form is submitted
-        if(isset($_POST['resetBtn'])) {
-            // Get values from POST
-            $token = $this->input->post('token');
-            $email = $this->input->post('email');
-            
-            // Set validation rules
-            $this->form_validation->set_rules('new_password', 'New Password', 'required|min_length[6]');
-            $this->form_validation->set_rules('confirm_password', 'Confirm New Password', 'required|matches[new_password]');
-            
-            if ($this->form_validation->run() == FALSE) {
-                // Validation failed, show form with errors
-                $data = array();
-                $data['token'] = $token;
-                $data['email'] = $email;
-                $data['error_message'] = validation_errors();
-                $this->load->view('main/reset_password', $data);
-            } else {
-                // Validation passed, check reset token
-                $new_password = $this->input->post('new_password');
-                
-                // Validate reset token and reset password
-                if($this->users->resetPasswordWithToken($token, $new_password)) {
-                    // Password reset successful
-                    $this->load->view('main/password_reset_success');
-                } else {
-                    // Invalid reset token
-                    $data = array();
-                    $data['token'] = $token;
-                    $data['email'] = $email;
-                    $data['error_message'] = 'Invalid or expired reset token. Please request a new password reset.';
-                    $this->load->view('main/reset_password', $data);
-                }
-            }
-        } else {
-            // Show the reset password form if we have a valid token
-            if ($token && $email) {
-                // Validate the token
-                $user = $this->users->validateResetToken($token);
-                if ($user && $user['email'] === $email) {
-                    // Valid token, show the reset form
-                    $data = array();
-                    $data['token'] = $token;
-                    $data['email'] = $email;
-                    $this->load->view('main/reset_password', $data);
-                } else {
-                    // Invalid token, show error
-                    $data = array();
-                    $data['error_message'] = 'Invalid or expired reset token. Please request a new password reset.';
-                    $this->load->view('main/forgot_password', $data);
-                }
-            } else {
-                // No token, redirect to forgot password
-                redirect('forgot_password');
-            }
-        }
+        redirect('forgot_password');
     }
 
     public function logout()

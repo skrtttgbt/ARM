@@ -338,7 +338,7 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <h5 class="card-title mb-1">Nearest Vaccine Expiry</h5>
-                                        <p class="text-muted mb-0">Upcoming box expirations based on stock batches</p>
+                                        <p class="text-muted mb-0">Upcoming stock expirations based on patient-capacity batches</p>
                                     </div>
                                 </div>
                                 <div class="table-responsive">
@@ -346,7 +346,7 @@
                                         <thead>
                                             <tr>
                                                 <th>Vaccine</th>
-                                                <th>Boxes Left</th>
+                                                <th>Patients Left</th>
                                                 <th>Expiration Date</th>
                                                 <th>Status</th>
                                             </tr>
@@ -392,33 +392,33 @@
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">Vaccine Patient Progress</h5>
+                                <p class="text-muted mb-3">Stock is tracked by patients. Each vial can serve 3 patients.</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped mb-0">
                                         <thead>
                                             <tr>
                                                 <th>Vaccine</th>
-                                                <th>Boxes Left</th>
-                                                <th>Dose Qty</th>
-                                                <th>Box Quantity</th>
+                                                <th>Vaccine Left</th>
+                                                <th>Current Vial Progress</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if (!empty($vaccines)): ?>
                                                 <?php foreach ($vaccines as $vaccine): ?>
                                                     <?php
-                                                    $dose_amount = 3;
-                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $dose_amount;
+                                                    $patients_per_vial = 3;
+                                                    $patients_left = (int) $vaccine['quantity'];
+                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $patients_per_vial;
                                                     ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($vaccine['name']); ?></td>
-                                                        <td><?php echo (int) $vaccine['quantity']; ?></td>
-                                                        <td><?php echo $dose_amount; ?></td>
-                                                        <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $dose_amount; ?></span></td>
+                                                        <td><?php echo $patients_left; ?></td>
+                                                        <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $patients_per_vial; ?></span></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php else: ?>
                                                 <tr>
-                                                    <td colspan="4" class="text-center text-muted">No vaccine stock available.</td>
+                                                    <td colspan="3" class="text-center text-muted">No vaccine stock available.</td>
                                                 </tr>
                                             <?php endif; ?>
                                         </tbody>
@@ -551,9 +551,9 @@
             var predictedIncidentCounts = <?php echo json_encode($chart_data['predicted_incident_counts']); ?>;
             var vaccineCtx = document.getElementById('vaccinePredictionChart').getContext('2d');
             var vaccineMonths = <?php echo json_encode($vaccine_forecast_data['chart_months']); ?>;
+            var allVaccineSeries = <?php echo json_encode($vaccine_forecast_data['chart_all_vaccines']); ?>;
             var vaccinePrediction = <?php echo json_encode($vaccine_forecast_data['chart_prediction']); ?>;
-            var vaxirabSeries = <?php echo json_encode($vaccine_forecast_data['chart_vaxirab']); ?>;
-            var speedaSeries = <?php echo json_encode($vaccine_forecast_data['chart_speeda']); ?>;
+            var vaccineSeries = <?php echo json_encode($vaccine_forecast_data['chart_vaccine_series']); ?>;
 
             new Chart(ctx, {
                 type: 'line',
@@ -605,49 +605,66 @@
                 }
             });
 
+            var palette = [
+                ['rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.15)'],
+                ['rgb(54, 162, 235)', 'rgba(54, 162, 235, 0.15)'],
+                ['rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.15)'],
+                ['rgb(153, 102, 255)', 'rgba(153, 102, 255, 0.15)'],
+                ['rgb(255, 205, 86)', 'rgba(255, 205, 86, 0.15)'],
+                ['rgb(201, 203, 207)', 'rgba(201, 203, 207, 0.15)'],
+                ['rgb(255, 159, 64)', 'rgba(255, 159, 64, 0.15)']
+            ];
+
+            var vaccineDatasets = [{
+                label: 'Prediction',
+                data: vaccinePrediction,
+                borderColor: 'rgb(255, 159, 64)',
+                backgroundColor: 'rgba(255, 159, 64, 0.15)',
+                borderWidth: 3,
+                borderDash: [8, 6],
+                tension: 0.35,
+                spanGaps: true,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }, {
+                label: 'ALL Vaccine',
+                data: allVaccineSeries,
+                borderColor: 'rgb(40, 167, 69)',
+                backgroundColor: 'rgba(40, 167, 69, 0.15)',
+                borderWidth: 3,
+                tension: 0.35,
+                spanGaps: false,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }];
+
+            vaccineSeries.forEach(function(series, index) {
+                var colors = palette[index % palette.length];
+                vaccineDatasets.push({
+                    label: series.label,
+                    data: series.data,
+                    borderColor: colors[0],
+                    backgroundColor: colors[1],
+                    borderWidth: 3,
+                    tension: 0.35,
+                    spanGaps: false,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                });
+            });
+
             new Chart(vaccineCtx, {
                 type: 'line',
                 data: {
                     labels: vaccineMonths,
-                    datasets: [{
-                        label: 'Prediction',
-                        data: vaccinePrediction,
-                        borderColor: 'rgb(255, 159, 64)',
-                        backgroundColor: 'rgba(255, 159, 64, 0.15)',
-                        borderWidth: 3,
-                        borderDash: [8, 6],
-                        tension: 0.35,
-                        spanGaps: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }, {
-                        label: 'VaxiRab N',
-                        data: vaxirabSeries,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.15)',
-                        borderWidth: 3,
-                        tension: 0.35,
-                        spanGaps: false,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }, {
-                        label: 'SPEEDA',
-                        data: speedaSeries,
-                        borderColor: 'rgb(54, 162, 235)',
-                        backgroundColor: 'rgba(54, 162, 235, 0.15)',
-                        borderWidth: 3,
-                        tension: 0.35,
-                        spanGaps: false,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
+                    datasets: vaccineDatasets
                 },
                 options: {
                     responsive: true,
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Prediction, VaxiRab N, and SPEEDA'
+                            text: 'Prediction and All Vaccines'
                         },
                         legend: {
                             position: 'top'

@@ -327,7 +327,7 @@ $CI->load->library('session');
                                                 <th>Type</th>
                                                 <th>Capacity</th>
                                                 <th>Dose Qty</th>
-                                                <th>Quantity</th>
+                                                <th>Vaccine Available</th>
                                                 <th>Patient Progress</th>
                                                 <th>Nearest Expiry</th>
                                                 <th>Expiry Status</th>
@@ -374,7 +374,7 @@ $CI->load->library('session');
                                                     <td><span class="badge bg-<?php echo $expiry_class; ?>"><?php echo $expiry_label; ?></span></td>
                                                     <td>
                                                         <?php if ((int) $user_info['level'] === 0): ?>
-                                                            <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Quantity</a>
+                                                            <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Stock</a>
                                                             <?php if ((int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
                                                                 <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
                                                             <?php endif; ?>
@@ -389,15 +389,21 @@ $CI->load->library('session');
                                                     <div class="modal-dialog">
                                                         <div class="modal-content">
                                                             <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Add Quantity</h4>
+                                                                <h4 class="modal-title" id="myModalLabel">Add Stock</h4>
                                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                                     aria-hidden="true"></button>
                                                             </div>
                                                             <div class="modal-body">
                                                                 <?php echo form_open(base_url() . "vaccine/action/add_quantity/" . $vaccine['id']); ?>
                                                                     <div class="mb-3">
-                                                                        <label class="form-label">Quantity to add</label>
-                                                                        <input type="number" name="quantity" min="1" value="1" class="form-control" required>
+                                                                        <label class="form-label">Boxes to add</label>
+                                                                        <input type="number" name="quantity" min="1" value="1" class="form-control js-box-quantity" required>
+                                                                        <small class="form-text text-muted">Each box has 3 vials, and each vial can serve 3 patients.</small>
+                                                                    </div>
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Number of vials</label>
+                                                                        <input type="number" value="3" class="form-control js-vial-preview" disabled>
+                                                                        <small class="form-text text-muted">Preview only: boxes x 3 vials.</small>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">Manufacture Date</label>
@@ -431,9 +437,9 @@ $CI->load->library('session');
                                                             <div class="modal-body">
                                                                 <?php echo form_open(base_url() . "vaccine/action/archive/" . $vaccine['id']); ?>
                                                                     <div class="mb-3">
-                                                                        <label class="form-label">Quantity to archive</label>
+                                                                        <label class="form-label">Patients to archive</label>
                                                                         <input type="number" name="quantity" min="1" max="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" value="<?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?>" class="form-control" required>
-                                                                        <small class="form-text text-muted">Available quantity: <?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?></small>
+                                                                        <small class="form-text text-muted">Available vaccine stock: <?php echo (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0); ?></small>
                                                                     </div>
                                                                     <div class="mb-3">
                                                                         <label class="form-label">Archive Reason</label>
@@ -484,7 +490,7 @@ $CI->load->library('session');
                                             <tr>
                                                 <th>Vaccine</th>
                                                 <th>Barcode</th>
-                                                <th>Boxes Remaining</th>
+                                                <th>Vaccine Remaining</th>
                                                 <th>Manufacture Date</th>
                                                 <th>Expiration Date</th>
                                                 <th>Status</th>
@@ -573,6 +579,31 @@ $CI->load->library('session');
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
         $('#default_order').DataTable();
+
+        function updateVialPreview(input) {
+            var boxes = parseInt(input.value, 10);
+            if (isNaN(boxes) || boxes < 1) {
+                boxes = 1;
+            }
+
+            var form = input.closest('form');
+            if (!form) {
+                return;
+            }
+
+            var vialPreview = form.querySelector('.js-vial-preview');
+            if (vialPreview) {
+                vialPreview.value = boxes * 3;
+            }
+        }
+
+        document.querySelectorAll('.js-box-quantity').forEach(function(input) {
+            updateVialPreview(input);
+
+            input.addEventListener('input', function() {
+                updateVialPreview(input);
+            });
+        });
     </script>
 </body>
 

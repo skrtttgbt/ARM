@@ -249,6 +249,74 @@ class Users extends CI_Model {
         return $token;
     }
 
+    public function createPasswordResetOtp($email)
+    {
+        $user = $this->getUserByEmail($email);
+        if (!$user) {
+            return false;
+        }
+
+        $phone = normalize_ph_mobile($user['mobile'] ?? '');
+        if ($phone === '') {
+            return false;
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $updated = $this->db
+            ->where('id', (int) $user['id'])
+            ->update('users', array(
+                'reset_token' => $otp,
+                'reset_token_expires' => time() + 300,
+                'updated_at' => time()
+            ));
+
+        if (!$updated) {
+            return false;
+        }
+
+        $message = sprintf(
+            "PetVax OTP: %s\nUse this code to reset your password. It expires in 5 minutes.",
+            $otp
+        );
+
+        if (!$this->sendSmsMessage($phone, $message)) {
+            log_message('error', 'Password reset OTP SMS notification failed for: ' . $phone);
+            return false;
+        }
+
+        return true;
+    }
+
+    public function validatePasswordResetOtp($email, $otp)
+    {
+        $current_time = time();
+
+        $query = $this->db->where('email', $email)
+            ->where('reset_token', trim((string) $otp))
+            ->where('reset_token_expires >', $current_time)
+            ->get('users');
+
+        return $query->row_array();
+    }
+
+    public function resetPasswordWithOtp($email, $otp, $new_password)
+    {
+        $user = $this->validatePasswordResetOtp($email, $otp);
+        if (!$user) {
+            return false;
+        }
+
+        $data = array(
+            'password' => md5($new_password),
+            'reset_token' => NULL,
+            'reset_token_expires' => NULL,
+            'updated_at' => time()
+        );
+
+        $this->db->where('id', (int) $user['id']);
+        return $this->db->update('users', $data);
+    }
+
     public function validateResetToken($token) {
         $current_time = time();
         

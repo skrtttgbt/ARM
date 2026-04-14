@@ -3,8 +3,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class ScheduleController extends CI_Controller {
 
-    private const PATIENTS_PER_BOX = 3;
-
     // Declare properties to avoid PHP 8.2 deprecation warnings
     public $benchmark;
     public $hooks;
@@ -180,13 +178,8 @@ class ScheduleController extends CI_Controller {
             $created_vial_id = $this->vials->createVialForVaccine((int) $session_id, (int) $vaccine['id']);
             $this->schedules->updateScheduleOngoingByVialId($id, $created_vial_id);
 
-            $dose_amount_per_box = self::PATIENTS_PER_BOX;
-            $used_dose_count = $this->vaccines->getUsedDoseCount($vaccine['id']);
-
-            if ($used_dose_count > 0 && $used_dose_count % $dose_amount_per_box === 0) {
-                $this->vaccines->deductQuantity($vaccine['id'], 1);
-                $this->vaccine_batches->deductQuantity($vaccine['id'], 1);
-            }
+            $this->vaccines->deductQuantity($vaccine['id'], 1);
+            $this->vaccine_batches->deductQuantity($vaccine['id'], 1);
 
             $this->db->trans_complete();
 

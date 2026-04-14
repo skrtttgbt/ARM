@@ -2,6 +2,9 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class VaccineController extends CI_Controller {
+    private const VIALS_PER_BOX = 3;
+    private const PATIENTS_PER_VIAL = 3;
+    private const PATIENTS_PER_BOX = self::VIALS_PER_BOX * self::PATIENTS_PER_VIAL;
     
     // Declare properties to avoid PHP 8.2 deprecation warnings
     public $benchmark;
@@ -214,12 +217,12 @@ class VaccineController extends CI_Controller {
             return;
         }
 
-        $quantity = (int) $this->input->post('quantity');
+        $boxes = (int) $this->input->post('quantity');
         $manufacture_date = trim((string) $this->input->post('manufacture_date'));
         $expiration_date = trim((string) $this->input->post('expiration_date'));
 
-        if ($quantity <= 0) {
-            $this->session->set_flashdata('message', 'Quantity must be greater than 0.');
+        if ($boxes <= 0) {
+            $this->session->set_flashdata('message', 'Boxes must be greater than 0.');
             redirect('vaccine');
             return;
         }
@@ -236,9 +239,11 @@ class VaccineController extends CI_Controller {
             return;
         }
 
+        $patient_quantity = $boxes * self::PATIENTS_PER_BOX;
+
         $this->db->trans_start();
-        $this->vaccines->addQuantity($id, $quantity);
-        $this->vaccine_batches->addBatch($id, $session_id, $quantity, $manufacture_date, $expiration_date);
+        $this->vaccines->addQuantity($id, $patient_quantity);
+        $this->vaccine_batches->addBatch($id, $session_id, $patient_quantity, $manufacture_date, $expiration_date);
         $this->db->trans_complete();
 
         if (!$this->db->trans_status()) {
@@ -247,7 +252,7 @@ class VaccineController extends CI_Controller {
             return;
         }
 
-        $this->session->set_flashdata('message', 'Quantity added successfully.');
+        $this->session->set_flashdata('message', 'Vaccine stock added successfully.');
         redirect('vaccine');
     }
 
@@ -427,30 +432,74 @@ class VaccineController extends CI_Controller {
             return $fallback;
         }
 
+        // SARIMA(3,1,1)(1,1,1,12) approximation:
+        // w_t = (1 - B)(1 - B^12)y_t
+        // w_t = phi1*w_(t-1) + phi2*w_(t-2) + phi3*w_(t-3) + Phi1*w_(t-12)
+        //       + theta1*e_(t-1) + Theta1*e_(t-12)
+        // y_t = y_(t-1) + y_(t-12) - y_(t-13) + w_t
+        $ar = [0.45, 0.25, 0.10];
+        $seasonal_ar = 0.30;
+        $ma = 0.35;
+        $seasonal_ma = 0.20;
+        $min_prediction_index = $seasonal_period + 13;
         $prediction_series = [];
+        $residuals = array_fill(0, $count, 0.0);
+        $differenced_series = array_fill(0, $count, null);
+
+        for ($index = $seasonal_period + 1; $index < $count; $index++) {
+            $differenced_series[$index] = $series[$index]
+                - $series[$index - 1]
+                - $series[$index - $seasonal_period]
+                + $series[$index - $seasonal_period - 1];
+        }
 
         for ($index = 0; $index < $count; $index++) {
-            if ($index < $seasonal_period + 1) {
+            if ($index < $min_prediction_index) {
                 $prediction_series[] = null;
                 continue;
             }
 
+            $differenced_prediction =
+                ($ar[0] * (float) $differenced_series[$index - 1]) +
+                ($ar[1] * (float) $differenced_series[$index - 2]) +
+                ($ar[2] * (float) $differenced_series[$index - 3]) +
+                ($seasonal_ar * (float) $differenced_series[$index - $seasonal_period]) +
+                ($ma * (float) $residuals[$index - 1]) +
+                ($seasonal_ma * (float) $residuals[$index - $seasonal_period]);
+
             $predicted = $series[$index - 1]
                 + $series[$index - $seasonal_period]
-                - $series[$index - $seasonal_period - 1];
+                - $series[$index - $seasonal_period - 1]
+                + $differenced_prediction;
 
             $prediction_series[] = max(0, (int) round($predicted));
+            $residuals[$index] = (float) $differenced_series[$index] - $differenced_prediction;
         }
 
         $series_for_forecast = $series;
+        $forecast_differenced_series = $differenced_series;
+        $forecast_residuals = $residuals;
         for ($i = 0; $i < $forecast_months; $i++) {
             $last_index = count($series_for_forecast) - 1;
-            $forecast = $series_for_forecast[$last_index]
-                + $series_for_forecast[$last_index - $seasonal_period + 1]
-                - $series_for_forecast[$last_index - $seasonal_period];
+            $next_index = $last_index + 1;
+
+            $differenced_forecast =
+                ($ar[0] * (float) $forecast_differenced_series[$next_index - 1]) +
+                ($ar[1] * (float) $forecast_differenced_series[$next_index - 2]) +
+                ($ar[2] * (float) $forecast_differenced_series[$next_index - 3]) +
+                ($seasonal_ar * (float) $forecast_differenced_series[$next_index - $seasonal_period]) +
+                ($ma * (float) $forecast_residuals[$next_index - 1]) +
+                ($seasonal_ma * (float) $forecast_residuals[$next_index - $seasonal_period]);
+
+            $forecast = $series_for_forecast[$next_index - 1]
+                + $series_for_forecast[$next_index - $seasonal_period]
+                - $series_for_forecast[$next_index - $seasonal_period - 1]
+                + $differenced_forecast;
 
             $forecast = max(0, (int) round($forecast));
             $series_for_forecast[] = $forecast;
+            $forecast_differenced_series[$next_index] = $differenced_forecast;
+            $forecast_residuals[$next_index] = 0.0;
             $prediction_series[] = $forecast;
         }
 

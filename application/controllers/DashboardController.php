@@ -232,8 +232,7 @@ class DashboardController extends CI_Controller {
         $month_keys = [];
         $month_labels = [];
         $overall_actual = [];
-        $vaxirab_actual = [];
-        $speeda_actual = [];
+        $vaccine_series = [];
 
         $cursor = $start_date;
         while ($cursor <= $current_month) {
@@ -241,17 +240,28 @@ class DashboardController extends CI_Controller {
             $month_keys[] = $date;
             $month_labels[] = $cursor->format('M Y');
             $overall_actual[] = 0;
-            $vaxirab_actual[] = 0;
-            $speeda_actual[] = 0;
 
             $cursor = $cursor->modify('+1 month');
         }
 
+        $vaccine_rows = $this->db
+            ->select('name')
+            ->from('vaccines')
+            ->where('name IS NOT NULL', null, false)
+            ->where('name <>', '')
+            ->order_by('name', 'ASC')
+            ->get()
+            ->result_array();
+
+        foreach ($vaccine_rows as $vaccine_row) {
+            $vaccine_name = (string) $vaccine_row['name'];
+            $vaccine_series[$vaccine_name] = array_fill(0, count($month_keys), 0);
+        }
+
         $this->db->select("
             DATE_FORMAT(s.schedule, '%Y-%m') AS month_key,
-            COUNT(*) AS total_count,
-            SUM(CASE WHEN va.name = 'VaxiRab N' THEN 1 ELSE 0 END) AS vaxirab_count,
-            SUM(CASE WHEN va.name = 'SPEEDA' THEN 1 ELSE 0 END) AS speeda_count
+            va.name AS vaccine_name,
+            COUNT(*) AS total_count
         ", false);
         $this->db->from('schedules s');
         $this->db->join('vials v', 's.vial_id = v.id', 'left');
@@ -259,7 +269,9 @@ class DashboardController extends CI_Controller {
         $this->db->where('s.status', 1);
         $this->db->where('s.schedule IS NOT NULL', null, false);
         $this->db->where('s.schedule <>', '');
-        $this->db->group_by("DATE_FORMAT(s.schedule, '%Y-%m')", false);
+        $this->db->where('va.name IS NOT NULL', null, false);
+        $this->db->where('va.name <>', '');
+        $this->db->group_by(["DATE_FORMAT(s.schedule, '%Y-%m')", 'va.name'], false);
         $rows = $this->db->get()->result_array();
 
         $index_by_key = array_flip($month_keys);
@@ -269,14 +281,19 @@ class DashboardController extends CI_Controller {
             }
 
             $idx = $index_by_key[$row['month_key']];
-            $overall_actual[$idx] = (int) $row['total_count'];
-            $vaxirab_actual[$idx] = (int) $row['vaxirab_count'];
-            $speeda_actual[$idx] = (int) $row['speeda_count'];
+            $count = (int) $row['total_count'];
+            $vaccine_name = (string) $row['vaccine_name'];
+
+            $overall_actual[$idx] += $count;
+
+            if (!isset($vaccine_series[$vaccine_name])) {
+                $vaccine_series[$vaccine_name] = array_fill(0, count($month_keys), 0);
+            }
+
+            $vaccine_series[$vaccine_name][$idx] = $count;
         }
 
         $overall_prediction = $this->buildSarimaPredictionSeries($overall_actual, $forecast_months);
-        $vaxirab_prediction = $this->buildSarimaPredictionSeries($vaxirab_actual, $forecast_months);
-        $speeda_prediction = $this->buildSarimaPredictionSeries($speeda_actual, $forecast_months);
 
         $next_month_label = date('M Y', strtotime('+1 month'));
         $chart_months = $month_labels;
@@ -298,18 +315,22 @@ class DashboardController extends CI_Controller {
         }
         $chart_prediction[] = end($overall_prediction);
 
-        $chart_vaxirab = $vaxirab_actual;
-        $chart_vaxirab[] = null;
-        $chart_speeda = $speeda_actual;
-        $chart_speeda[] = null;
+        $chart_vaccine_series = [];
+        foreach ($vaccine_series as $vaccine_name => $series) {
+            $series[] = null;
+            $chart_vaccine_series[] = [
+                'label' => $vaccine_name,
+                'data' => $series
+            ];
+        }
 
         return [
             'predicted_next_month' => end($overall_prediction),
             'next_month_label' => $next_month_label,
             'chart_months' => $chart_months,
+            'chart_all_vaccines' => array_merge($overall_actual, [null]),
             'chart_prediction' => $chart_prediction,
-            'chart_vaxirab' => $chart_vaxirab,
-            'chart_speeda' => $chart_speeda
+            'chart_vaccine_series' => $chart_vaccine_series
         ];
     }
 
@@ -417,32 +438,75 @@ class DashboardController extends CI_Controller {
             return $fallback;
         }
 
-        // SARIMA(0,1,0)(0,1,0,12): seasonal random-walk with first and seasonal differencing.
-        // In-sample estimate: y_t = y_(t-1) + y_(t-12) - y_(t-13)
+        // SARIMA(3,1,1)(1,1,1,12) approximation:
+        // w_t = (1 - B)(1 - B^12)y_t
+        // w_t = phi1*w_(t-1) + phi2*w_(t-2) + phi3*w_(t-3) + Phi1*w_(t-12)
+        //       + theta1*e_(t-1) + Theta1*e_(t-12)
+        // y_t = y_(t-1) + y_(t-12) - y_(t-13) + w_t
+        $ar = [0.45, 0.25, 0.10];
+        $seasonal_ar = 0.30;
+        $ma = 0.35;
+        $seasonal_ma = 0.20;
+        $min_prediction_index = $seasonal_period + 13;
+
         $prediction_series = [];
+        $residuals = array_fill(0, $count, 0.0);
+        $differenced_series = array_fill(0, $count, null);
+
+        for ($index = $seasonal_period + 1; $index < $count; $index++) {
+            $differenced_series[$index] = $incident_counts[$index]
+                - $incident_counts[$index - 1]
+                - $incident_counts[$index - $seasonal_period]
+                + $incident_counts[$index - $seasonal_period - 1];
+        }
 
         for ($index = 0; $index < $count; $index++) {
-            if ($index < $seasonal_period + 1) {
+            if ($index < $min_prediction_index) {
                 $prediction_series[] = null;
                 continue;
             }
 
+            $differenced_prediction =
+                ($ar[0] * (float) $differenced_series[$index - 1]) +
+                ($ar[1] * (float) $differenced_series[$index - 2]) +
+                ($ar[2] * (float) $differenced_series[$index - 3]) +
+                ($seasonal_ar * (float) $differenced_series[$index - $seasonal_period]) +
+                ($ma * (float) $residuals[$index - 1]) +
+                ($seasonal_ma * (float) $residuals[$index - $seasonal_period]);
+
             $predicted = $incident_counts[$index - 1]
                 + $incident_counts[$index - $seasonal_period]
-                - $incident_counts[$index - $seasonal_period - 1];
+                - $incident_counts[$index - $seasonal_period - 1]
+                + $differenced_prediction;
 
             $prediction_series[] = max(0, (int) round($predicted));
+            $residuals[$index] = (float) $differenced_series[$index] - $differenced_prediction;
         }
 
         $series_for_forecast = $incident_counts;
+        $forecast_differenced_series = $differenced_series;
+        $forecast_residuals = $residuals;
         for ($i = 0; $i < $forecast_months; $i++) {
             $last_index = count($series_for_forecast) - 1;
-            $forecast = $series_for_forecast[$last_index]
-                + $series_for_forecast[$last_index - $seasonal_period + 1]
-                - $series_for_forecast[$last_index - $seasonal_period];
+            $next_index = $last_index + 1;
+
+            $differenced_forecast =
+                ($ar[0] * (float) $forecast_differenced_series[$next_index - 1]) +
+                ($ar[1] * (float) $forecast_differenced_series[$next_index - 2]) +
+                ($ar[2] * (float) $forecast_differenced_series[$next_index - 3]) +
+                ($seasonal_ar * (float) $forecast_differenced_series[$next_index - $seasonal_period]) +
+                ($ma * (float) $forecast_residuals[$next_index - 1]) +
+                ($seasonal_ma * (float) $forecast_residuals[$next_index - $seasonal_period]);
+
+            $forecast = $series_for_forecast[$next_index - 1]
+                + $series_for_forecast[$next_index - $seasonal_period]
+                - $series_for_forecast[$next_index - $seasonal_period - 1]
+                + $differenced_forecast;
 
             $forecast = max(0, (int) round($forecast));
             $series_for_forecast[] = $forecast;
+            $forecast_differenced_series[$next_index] = $differenced_forecast;
+            $forecast_residuals[$next_index] = 0.0;
             $prediction_series[] = $forecast;
         }
 
