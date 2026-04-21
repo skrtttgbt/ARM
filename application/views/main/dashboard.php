@@ -447,18 +447,87 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div>
                                         <h5 class="card-title mb-1">Vaccine Prediction for Next Month</h5>
-                                        <p class="text-muted mb-0">Actual vaccine data from 2021 to present, with prediction starting in 2022</p>
+                                        <p class="text-muted mb-0">Total forecast numbers only for the upcoming month.</p>
                                     </div>
                                     <div class="text-end">
                                         <div class="fw-bold"><?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?></div>
                                         <small class="text-muted"><?php echo htmlspecialchars($vaccine_forecast_data['next_month_label']); ?></small>
                                     </div>
                                 </div>
-                                <canvas id="vaccinePredictionChart" height="150"></canvas>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-3 h-100">
+                                            <small class="text-muted d-block mb-1">Predicted Patients</small>
+                                            <h2 class="mb-1"><?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?></h2>
+                                            <small class="text-muted"><?php echo htmlspecialchars($vaccine_forecast_data['next_month_label']); ?></small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border rounded p-3 h-100">
+                                            <small class="text-muted d-block mb-1">Required Vials</small>
+                                            <h2 class="mb-1"><?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?></h2>
+                                            <small class="text-muted">Rounded up to cover all predicted patients</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-light border mt-3 mb-0" role="alert">
+                                    <h6 class="mb-2">Vial Formula</h6>
+                                    <p class="mb-2 text-dark">
+                                        Required Vials = Ceiling(Predicted Patients / <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>)
+                                    </p>
+                                    <p class="mb-0 text-muted">
+                                        <?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?> = Ceiling(<?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?> / <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>)
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-5">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">Next Month Forecast Summary</h5>
+                                        <p class="text-muted mb-0">Breakdown of the predicted total numbers only.</p>
+                                    </div>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <div class="border rounded p-2 h-100">
+                                            <small class="text-muted d-block">Forecast Month</small>
+                                            <strong><?php echo htmlspecialchars($vaccine_forecast_data['next_month_label']); ?></strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="border rounded p-2 h-100">
+                                            <small class="text-muted d-block">Predicted Patients</small>
+                                            <strong><?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?></strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="border rounded p-2 h-100">
+                                            <small class="text-muted d-block">Patients Per Vial</small>
+                                            <strong><?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?></strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="border rounded p-2 h-100 bg-light">
+                                            <small class="text-muted d-block">Required Vials</small>
+                                            <strong class="fs-4"><?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?></strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="border rounded p-2 h-100">
+                                            <small class="text-muted d-block">Formula Used</small>
+                                            <strong>Ceiling(Predicted Patients / Patients Per Vial)</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">Vaccine Archive Summary</h5>
@@ -549,11 +618,6 @@
             var months = <?php echo json_encode($chart_data['months']); ?>;
             var incidentCounts = <?php echo json_encode($chart_data['incident_counts']); ?>;
             var predictedIncidentCounts = <?php echo json_encode($chart_data['predicted_incident_counts']); ?>;
-            var vaccineCtx = document.getElementById('vaccinePredictionChart').getContext('2d');
-            var vaccineMonths = <?php echo json_encode($vaccine_forecast_data['chart_months']); ?>;
-            var allVaccineSeries = <?php echo json_encode($vaccine_forecast_data['chart_all_vaccines']); ?>;
-            var vaccinePrediction = <?php echo json_encode($vaccine_forecast_data['chart_prediction']); ?>;
-            var vaccineSeries = <?php echo json_encode($vaccine_forecast_data['chart_vaccine_series']); ?>;
 
             new Chart(ctx, {
                 type: 'line',
@@ -599,83 +663,6 @@
                             title: {
                                 display: true,
                                 text: 'Count'
-                            }
-                        }
-                    }
-                }
-            });
-
-            var palette = [
-                ['rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.15)'],
-                ['rgb(54, 162, 235)', 'rgba(54, 162, 235, 0.15)'],
-                ['rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.15)'],
-                ['rgb(153, 102, 255)', 'rgba(153, 102, 255, 0.15)'],
-                ['rgb(255, 205, 86)', 'rgba(255, 205, 86, 0.15)'],
-                ['rgb(201, 203, 207)', 'rgba(201, 203, 207, 0.15)'],
-                ['rgb(255, 159, 64)', 'rgba(255, 159, 64, 0.15)']
-            ];
-
-            var vaccineDatasets = [{
-                label: 'Prediction',
-                data: vaccinePrediction,
-                borderColor: 'rgb(255, 159, 64)',
-                backgroundColor: 'rgba(255, 159, 64, 0.15)',
-                borderWidth: 3,
-                borderDash: [8, 6],
-                tension: 0.35,
-                spanGaps: true,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }, {
-                label: 'ALL Vaccine',
-                data: allVaccineSeries,
-                borderColor: 'rgb(40, 167, 69)',
-                backgroundColor: 'rgba(40, 167, 69, 0.15)',
-                borderWidth: 3,
-                tension: 0.35,
-                spanGaps: false,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }];
-
-            vaccineSeries.forEach(function(series, index) {
-                var colors = palette[index % palette.length];
-                vaccineDatasets.push({
-                    label: series.label,
-                    data: series.data,
-                    borderColor: colors[0],
-                    backgroundColor: colors[1],
-                    borderWidth: 3,
-                    tension: 0.35,
-                    spanGaps: false,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                });
-            });
-
-            new Chart(vaccineCtx, {
-                type: 'line',
-                data: {
-                    labels: vaccineMonths,
-                    datasets: vaccineDatasets
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Prediction and All Vaccines'
-                        },
-                        legend: {
-                            position: 'top'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Vaccinations'
                             }
                         }
                     }

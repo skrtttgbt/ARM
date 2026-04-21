@@ -324,13 +324,56 @@ class DashboardController extends CI_Controller {
             ];
         }
 
+        $monthly_prediction_rows = [];
+        $prediction_years = [];
+        $patients_per_vial = 3;
+
+        foreach ($month_labels as $index => $label) {
+            if ($index < $prediction_start_index || !isset($overall_prediction[$index]) || $overall_prediction[$index] === null) {
+                continue;
+            }
+
+            $month_key = $month_keys[$index];
+            $predicted_value = (int) $overall_prediction[$index];
+            $prediction_year = substr($month_key, 0, 4);
+
+            $monthly_prediction_rows[] = [
+                'month_key' => $month_key,
+                'month_label' => $label,
+                'year' => $prediction_year,
+                'predicted_total' => $predicted_value,
+                'required_vials' => (int) ceil($predicted_value / $patients_per_vial)
+            ];
+
+            $prediction_years[$prediction_year] = true;
+        }
+
+        $next_month_prediction = (int) end($overall_prediction);
+        $next_month_key = date('Y-m', strtotime('+1 month'));
+        $next_month_year = substr($next_month_key, 0, 4);
+        $next_month_required_vials = (int) ceil($next_month_prediction / $patients_per_vial);
+
+        $monthly_prediction_rows[] = [
+            'month_key' => $next_month_key,
+            'month_label' => $next_month_label,
+            'year' => $next_month_year,
+            'predicted_total' => $next_month_prediction,
+            'required_vials' => $next_month_required_vials
+        ];
+
+        $prediction_years[$next_month_year] = true;
+
         return [
-            'predicted_next_month' => end($overall_prediction),
+            'predicted_next_month' => $next_month_prediction,
             'next_month_label' => $next_month_label,
             'chart_months' => $chart_months,
             'chart_all_vaccines' => array_merge($overall_actual, [null]),
             'chart_prediction' => $chart_prediction,
-            'chart_vaccine_series' => $chart_vaccine_series
+            'chart_vaccine_series' => $chart_vaccine_series,
+            'monthly_prediction_rows' => $monthly_prediction_rows,
+            'prediction_years' => array_keys($prediction_years),
+            'patients_per_vial' => $patients_per_vial,
+            'next_month_required_vials' => $next_month_required_vials
         ];
     }
 

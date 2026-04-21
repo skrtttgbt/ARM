@@ -311,6 +311,62 @@ $CI->load->library('session');
                     <a href="<?php echo base_url(); ?>vaccine" class="btn btn-primary active">Vaccine List</a>
                     <a href="<?php echo base_url(); ?>vaccine/archive" class="btn btn-outline-primary">Archive</a>
                 </div>
+
+                <?php if ((int) $user_info['level'] === 0): ?>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <div>
+                                <h4 class="card-title mb-1">Add Vaccine Quantity</h4>
+                                <p class="text-muted mb-0">Choose a vaccine type, then add new stock in one place.</p>
+                            </div>
+                        </div>
+
+                        <form id="addStockForm" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Vaccine Type</label>
+                                    <select id="addStockVaccineSelect" class="form-control" required>
+                                        <option value="">Select vaccine</option>
+                                        <?php if ($vaccines): ?>
+                                            <?php foreach ($vaccines as $vaccine): ?>
+                                                <option
+                                                    value="<?php echo (int) $vaccine['id']; ?>"
+                                                    data-action="<?php echo base_url() . 'vaccine/action/add_quantity/' . $vaccine['id']; ?>"
+                                                >
+                                                    <?php echo htmlspecialchars($vaccine['name'] . ' - ' . $vaccine['type']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Boxes to add</label>
+                                    <input type="number" name="quantity" min="1" value="1" class="form-control js-box-quantity" required>
+                                    <small class="form-text text-muted">Each box has 3 vials, each vial serves 3 patients.</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Number of vials</label>
+                                    <input type="number" value="3" class="form-control js-vial-preview" disabled>
+                                    <small class="form-text text-muted">Preview only: boxes x 3 vials.</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Manufacture Date</label>
+                                    <input type="date" name="manufacture_date" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Expiration Date</label>
+                                    <input type="date" name="expiration_date" class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-success">Add Quantity</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <h4 class="card-title">Vaccine List</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
@@ -325,11 +381,8 @@ $CI->load->library('session');
                                                 <th>Barcode</th>
                                                 <th>Name</th>
                                                 <th>Type</th>
-                                                <th>Capacity</th>
-                                                <th>Dose Qty</th>
-                                                <th>Vaccine Available</th>
                                                 <th>Patient Progress</th>
-                                                <th>Nearest Expiry</th>
+                                                <th>Expiration Date</th>
                                                 <th>Expiry Status</th>
                                                 <th>Action</th>
                                             </tr>
@@ -364,9 +417,6 @@ $CI->load->library('session');
                                                     <td><?php echo $vaccine['barcode'];?></td>
                                                     <td><?php echo $vaccine['name'];?></td>
                                                     <td><?php echo $vaccine['type'];?></td>
-                                                    <td><?php echo $vaccine['capacity'];?></td>
-                                                    <td><?php echo $vaccine['amount'];?></td>
-                                                    <td><?php echo isset($vaccine['quantity']) ? $vaccine['quantity'] : 0;?></td>
                                                     <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $dose_amount; ?></span></td>
                                                     <td>
                                                         <?php echo $nearest_expiration !== '' ? date('M j, Y', strtotime($nearest_expiration)) : '<span class="text-muted">Not set</span>';?>
@@ -374,7 +424,6 @@ $CI->load->library('session');
                                                     <td><span class="badge bg-<?php echo $expiry_class; ?>"><?php echo $expiry_label; ?></span></td>
                                                     <td>
                                                         <?php if ((int) $user_info['level'] === 0): ?>
-                                                            <a class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#vaccine-modal-<?php echo $vaccine['id']; ?>">Add Stock</a>
                                                             <?php if ((int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
                                                                 <a class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#archive-vaccine-modal-<?php echo $vaccine['id']; ?>">Archive</a>
                                                             <?php endif; ?>
@@ -383,47 +432,6 @@ $CI->load->library('session');
                                                         <?php endif; ?>
                                                     </td>
                                                 </tr>
-                                                <?php if ((int) $user_info['level'] === 0): ?>
-                                                <div id="vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
-                                                    aria-labelledby="myModalLabel" aria-hidden="true">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h4 class="modal-title" id="myModalLabel">Add Stock</h4>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                                    aria-hidden="true"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                <?php echo form_open(base_url() . "vaccine/action/add_quantity/" . $vaccine['id']); ?>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Boxes to add</label>
-                                                                        <input type="number" name="quantity" min="1" value="1" class="form-control js-box-quantity" required>
-                                                                        <small class="form-text text-muted">Each box has 3 vials, and each vial can serve 3 patients.</small>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Number of vials</label>
-                                                                        <input type="number" value="3" class="form-control js-vial-preview" disabled>
-                                                                        <small class="form-text text-muted">Preview only: boxes x 3 vials.</small>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Manufacture Date</label>
-                                                                        <input type="date" name="manufacture_date" class="form-control" required>
-                                                                    </div>
-                                                                    <div class="mb-3">
-                                                                        <label class="form-label">Expiration Date</label>
-                                                                        <input type="date" name="expiration_date" class="form-control" required>
-                                                                    </div>
-                                                                    <div class="modal-footer px-0 pb-0">
-                                                                        <button type="button" class="btn btn-light"
-                                                                            data-bs-dismiss="modal">Close</button>
-                                                                        <button type="submit" class="btn btn-primary">Add</button>
-                                                                    </div>
-                                                                </form>
-                                                            </div>
-                                                        </div><!-- /.modal-content -->
-                                                    </div><!-- /.modal-dialog -->
-                                                </div><!-- /.modal -->
-                                                <?php endif; ?>
                                                 <?php if ((int) $user_info['level'] === 0 && (int) (isset($vaccine['quantity']) ? $vaccine['quantity'] : 0) > 0): ?>
                                                 <div id="archive-vaccine-modal-<?php echo $vaccine['id']; ?>" class="modal fade" tabindex="-1" role="dialog"
                                                     aria-labelledby="archiveVaccineLabel-<?php echo $vaccine['id']; ?>" aria-hidden="true">
@@ -477,6 +485,114 @@ $CI->load->library('session');
                         </div>
                     </div>
                     <!-- column -->
+                </div>
+
+                <h4 class="card-title mt-4">Vaccine Audit Trail</h4>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="auditTypeFilter" class="form-label">Filter Status</label>
+                                        <select id="auditTypeFilter" class="form-control">
+                                            <option value="">All Status</option>
+                                            <option value="IN STOCK">IN STOCK</option>
+                                            <option value="USED">USED</option>
+                                            <option value="DAMAGE">DAMAGE</option>
+                                            <option value="EXPIRED">EXPIRED</option>
+                                            <option value="RECALL">RECALL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="auditVaccineFilter" class="form-label">Filter Vaccine</label>
+                                        <select id="auditVaccineFilter" class="form-control">
+                                            <option value="">All Vaccines</option>
+                                            <?php
+                                            $audit_vaccine_options = array();
+                                            if (!empty($audit_trail_entries)) {
+                                                foreach ($audit_trail_entries as $entry) {
+                                                    if (!empty($entry['vaccine_name'])) {
+                                                        $audit_vaccine_options[$entry['vaccine_name']] = true;
+                                                    }
+                                                }
+                                            }
+                                            ksort($audit_vaccine_options);
+                                            ?>
+                                            <?php if (!empty($audit_vaccine_options)): ?>
+                                                <?php foreach (array_keys($audit_vaccine_options) as $audit_vaccine_name): ?>
+                                                    <option value="<?php echo htmlspecialchars($audit_vaccine_name); ?>"><?php echo htmlspecialchars($audit_vaccine_name); ?></option>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="auditDateFilter" class="form-label">Search Date</label>
+                                        <input type="text" id="auditDateFilter" class="form-control" placeholder="Example: Apr 2026 or Apr 20">
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table id="vaccine_audit_table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Status</th>
+                                                <th>Vaccine</th>
+                                                <th>Barcode</th>
+                                                <th>Quantity</th>
+                                                <th>Date</th>
+                                                <th>Date Info</th>
+                                                <th>Reference</th>
+                                                <th>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($audit_trail_entries)): ?>
+                                                <?php foreach ($audit_trail_entries as $entry): ?>
+                                                    <?php
+                                                    $badge_class = 'secondary';
+                                                    if ($entry['event_type'] === 'IN STOCK') {
+                                                        $badge_class = 'success';
+                                                    } elseif ($entry['event_type'] === 'USED') {
+                                                        $badge_class = 'primary';
+                                                    } elseif ($entry['event_type'] === 'DAMAGE') {
+                                                        $badge_class = 'danger';
+                                                    } elseif ($entry['event_type'] === 'EXPIRED') {
+                                                        $badge_class = 'warning';
+                                                    } elseif ($entry['event_type'] === 'RECALL') {
+                                                        $badge_class = 'dark';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><span class="badge bg-<?php echo $badge_class; ?>"><?php echo htmlspecialchars($entry['event_type']); ?></span></td>
+                                                        <td><?php echo htmlspecialchars($entry['vaccine_name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['vaccine_barcode']); ?></td>
+                                                        <td><?php echo (int) $entry['quantity']; ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['event_date']); ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['date_note']); ?></td>
+                                                        <td>
+                                                            <?php
+                                                            if (!empty($entry['reference_label']) && !empty($entry['reference_date'])) {
+                                                                echo htmlspecialchars($entry['reference_label'] . ': ' . $entry['reference_date']);
+                                                            } else {
+                                                                echo '<span class="text-muted">-</span>';
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($entry['details']); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="8" class="text-center text-muted">No audit trail records found.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <h4 class="card-title mt-4">Expiration List</h4>
@@ -578,7 +694,69 @@ $CI->load->library('session');
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $('#default_order').DataTable();
+        var vaccineTable = $('#default_order').DataTable();
+        var auditTable = $('#vaccine_audit_table').DataTable({
+            order: [[4, 'desc']]
+        });
+
+        $.fn.dataTable.ext.search.push(function(settings, data) {
+            if (settings.nTable.id !== 'vaccine_audit_table') {
+                return true;
+            }
+
+            var selectedType = ($('#auditTypeFilter').val() || '').toLowerCase();
+            var selectedVaccine = ($('#auditVaccineFilter').val() || '').toLowerCase();
+            var dateKeyword = ($('#auditDateFilter').val() || '').toLowerCase();
+
+            var rowType = (data[0] || '').toLowerCase();
+            var rowVaccine = (data[1] || '').toLowerCase();
+            var rowDate = (data[4] || '').toLowerCase();
+            var rowDateInfo = (data[5] || '').toLowerCase();
+            var rowReference = (data[6] || '').toLowerCase();
+
+            if (selectedType && rowType.indexOf(selectedType) === -1) {
+                return false;
+            }
+
+            if (selectedVaccine && rowVaccine !== selectedVaccine) {
+                return false;
+            }
+
+            if (dateKeyword && rowDate.indexOf(dateKeyword) === -1 && rowDateInfo.indexOf(dateKeyword) === -1 && rowReference.indexOf(dateKeyword) === -1) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $('#auditTypeFilter, #auditVaccineFilter').on('change', function() {
+            auditTable.draw();
+        });
+
+        $('#auditDateFilter').on('keyup change', function() {
+            auditTable.draw();
+        });
+
+        var addStockForm = document.getElementById('addStockForm');
+        var addStockVaccineSelect = document.getElementById('addStockVaccineSelect');
+
+        if (addStockForm && addStockVaccineSelect) {
+            function syncAddStockAction() {
+                var selectedOption = addStockVaccineSelect.options[addStockVaccineSelect.selectedIndex];
+                var action = selectedOption ? selectedOption.getAttribute('data-action') : '';
+                addStockForm.action = action || '';
+            }
+
+            addStockVaccineSelect.addEventListener('change', syncAddStockAction);
+            syncAddStockAction();
+
+            addStockForm.addEventListener('submit', function(event) {
+                if (!addStockVaccineSelect.value || !addStockForm.action) {
+                    event.preventDefault();
+                    addStockVaccineSelect.focus();
+                }
+            });
+        }
 
         function updateVialPreview(input) {
             var boxes = parseInt(input.value, 10);

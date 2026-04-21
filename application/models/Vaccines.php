@@ -7,6 +7,7 @@ class Vaccines extends CI_Model {
     {
         parent::__construct();
         $this->ensureBatchTableExists();
+        $this->ensureArchiveLogTableExists();
     }
 
     private function ensureBatchTableExists()
@@ -27,6 +28,31 @@ class Vaccines extends CI_Model {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
         $this->db->query($sql);
+    }
+
+    private function ensureArchiveLogTableExists()
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS `vaccine_archive_logs` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `vaccine_id` INT(11) NOT NULL,
+            `quantity_archived` INT(11) NOT NULL DEFAULT 0,
+            `reason` VARCHAR(255) NOT NULL,
+            `archived_by` INT(11) NOT NULL DEFAULT 0,
+            `archived_at` INT(11) NOT NULL DEFAULT 0,
+            `created_at` VARCHAR(50) NOT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_vaccine_archive_logs_vaccine_id` (`vaccine_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+
+        $this->db->query($sql);
+
+        if (!$this->db->field_exists('archived_at', 'vaccine_archive_logs')) {
+            $this->db->query("ALTER TABLE `vaccine_archive_logs` ADD COLUMN `archived_at` INT(11) NOT NULL DEFAULT 0");
+        }
+
+        if (!$this->db->field_exists('created_at', 'vaccine_archive_logs')) {
+            $this->db->query("ALTER TABLE `vaccine_archive_logs` ADD COLUMN `created_at` VARCHAR(50) NOT NULL DEFAULT ''");
+        }
     }
     
     public function getVaccines()
@@ -247,7 +273,9 @@ class Vaccines extends CI_Model {
             'vaccine_id' => (int) $id,
             'quantity_archived' => $archive_quantity,
             'reason' => $archive_reason,
-            'archived_by' => (int) $archived_by
+            'archived_by' => (int) $archived_by,
+            'archived_at' => time(),
+            'created_at' => date("F j, Y")
         ));
     }
 
@@ -268,5 +296,183 @@ class Vaccines extends CI_Model {
         $query = $this->db->where('quantity >', 0)->get('vaccines');
         
         return $query->num_rows();
+    }
+
+    public function getAuditTrailEntries()
+    {
+        $entries = array_merge(
+            $this->getStockAuditEntries(),
+            $this->getUsedAuditEntries(),
+            $this->getArchiveAuditEntries()
+        );
+
+        usort($entries, function ($left, $right) {
+            $left_time = isset($left['sort_timestamp']) ? (int) $left['sort_timestamp'] : 0;
+            $right_time = isset($right['sort_timestamp']) ? (int) $right['sort_timestamp'] : 0;
+
+            if ($left_time === $right_time) {
+                return strcmp((string) $right['event_date'], (string) $left['event_date']);
+            }
+
+            return $right_time <=> $left_time;
+        });
+
+        return $entries;
+    }
+
+    private function getStockAuditEntries()
+    {
+        $rows = $this->db
+            ->select('
+                vb.id,
+                vb.vaccine_id,
+                vb.quantity_added,
+                vb.manufacture_date,
+                vb.expiration_date,
+                vb.updated_at,
+                vb.created_at,
+                v.name AS vaccine_name,
+                v.barcode AS vaccine_barcode,
+                u.first_name,
+                u.last_name
+            ')
+            ->from('vaccine_batches vb')
+            ->join('vaccines v', 'v.id = vb.vaccine_id', 'left')
+            ->join('users u', 'u.id = vb.user_id', 'left')
+            ->order_by('vb.updated_at', 'DESC')
+            ->get()
+            ->result_array();
+
+        $entries = [];
+        foreach ($rows as $row) {
+            $entries[] = [
+                'event_type' => 'IN STOCK',
+                'vaccine_id' => (int) $row['vaccine_id'],
+                'vaccine_name' => (string) $row['vaccine_name'],
+                'vaccine_barcode' => (string) $row['vaccine_barcode'],
+                'quantity' => (int) $row['quantity_added'],
+                'event_date' => (string) $row['created_at'],
+                'event_timestamp' => (int) $row['updated_at'],
+                'date_note' => 'Inserted / restocked',
+                'details' => trim('Restocked by ' . $row['first_name'] . ' ' . $row['last_name']),
+                'reference_date' => !empty($row['expiration_date']) ? date('M j, Y', strtotime($row['expiration_date'])) : '',
+                'reference_label' => 'Expires',
+                'sort_timestamp' => (int) $row['updated_at']
+            ];
+        }
+
+        return $entries;
+    }
+
+    private function getUsedAuditEntries()
+    {
+        $rows = $this->db
+            ->select('
+                vi.id,
+                vi.vaccine_id,
+                vi.updated_at,
+                vi.created_at,
+                s.schedule,
+                v.name AS vaccine_name,
+                v.barcode AS vaccine_barcode
+            ')
+            ->from('vials vi')
+            ->join('vaccines v', 'v.id = vi.vaccine_id', 'left')
+            ->join('schedules s', 's.vial_id = vi.id', 'left')
+            ->where('vi.status', 1)
+            ->order_by('vi.updated_at', 'DESC')
+            ->get()
+            ->result_array();
+
+        $entries = [];
+        foreach ($rows as $row) {
+            $schedule_note = !empty($row['schedule']) ? 'Vaccination schedule: ' . date('M j, Y', strtotime($row['schedule'])) : 'Barcode scanned and used';
+
+            $entries[] = [
+                'event_type' => 'USED',
+                'vaccine_id' => (int) $row['vaccine_id'],
+                'vaccine_name' => (string) $row['vaccine_name'],
+                'vaccine_barcode' => (string) $row['vaccine_barcode'],
+                'quantity' => 1,
+                'event_date' => !empty($row['updated_at']) ? date('M j, Y g:i A', (int) $row['updated_at']) : (string) $row['created_at'],
+                'event_timestamp' => (int) $row['updated_at'],
+                'date_note' => 'Barcode scan date and time',
+                'details' => $schedule_note,
+                'reference_date' => '',
+                'reference_label' => '',
+                'sort_timestamp' => (int) $row['updated_at']
+            ];
+        }
+
+        return $entries;
+    }
+
+    private function getArchiveAuditEntries()
+    {
+        $rows = $this->db
+            ->select('
+                val.id,
+                val.vaccine_id,
+                val.quantity_archived,
+                val.reason,
+                val.archived_at,
+                val.created_at,
+                v.name AS vaccine_name,
+                v.barcode AS vaccine_barcode,
+                u.first_name,
+                u.last_name
+            ')
+            ->from('vaccine_archive_logs val')
+            ->join('vaccines v', 'v.id = val.vaccine_id', 'left')
+            ->join('users u', 'u.id = val.archived_by', 'left')
+            ->order_by('val.archived_at', 'DESC')
+            ->get()
+            ->result_array();
+
+        $entries = [];
+        foreach ($rows as $row) {
+            $event_type = $this->normalizeAuditReason($row['reason']);
+            $actor_name = trim($row['first_name'] . ' ' . $row['last_name']);
+            $details = $actor_name !== '' ? $event_type . ' by ' . $actor_name : $event_type;
+            $event_date = !empty($row['archived_at'])
+                ? date('M j, Y g:i A', (int) $row['archived_at'])
+                : (!empty($row['created_at']) ? (string) $row['created_at'] : 'Date not recorded');
+
+            $entries[] = [
+                'event_type' => $event_type,
+                'vaccine_id' => (int) $row['vaccine_id'],
+                'vaccine_name' => (string) $row['vaccine_name'],
+                'vaccine_barcode' => (string) $row['vaccine_barcode'],
+                'quantity' => (int) $row['quantity_archived'],
+                'event_date' => $event_date,
+                'event_timestamp' => (int) $row['archived_at'],
+                'date_note' => $event_type === 'EXPIRED' ? 'Archive date / expiry handling' : 'Archive date',
+                'details' => $details,
+                'reference_date' => '',
+                'reference_label' => '',
+                'sort_timestamp' => (int) $row['archived_at']
+            ];
+        }
+
+        return $entries;
+    }
+
+    private function normalizeAuditReason($reason)
+    {
+        $normalized = strtolower(trim((string) $reason));
+
+        if (in_array($normalized, array('damaged', 'damaged vial'), true)) {
+            return 'DAMAGE';
+        }
+
+        if (in_array($normalized, array('expired', 'expired stock'), true)) {
+            return 'EXPIRED';
+        }
+
+        if (in_array($normalized, array('recall', 'recall from supplier'), true)) {
+            return 'RECALL';
+        }
+
+        return strtoupper((string) $reason);
     }
 }

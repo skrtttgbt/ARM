@@ -58,6 +58,7 @@ class VaccineController extends CI_Controller {
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vaccines'] = $this->vaccines->getVaccines();
         $data['expiring_batches'] = $this->vaccine_batches->getExpiringBatches();
+        $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
 
         $this->load->view('vaccine/index', $data);
     }
