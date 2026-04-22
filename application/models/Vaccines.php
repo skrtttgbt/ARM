@@ -6,28 +6,7 @@ class Vaccines extends CI_Model {
     public function __construct()
     {
         parent::__construct();
-        $this->ensureBatchTableExists();
         $this->ensureArchiveLogTableExists();
-    }
-
-    private function ensureBatchTableExists()
-    {
-        $sql = "CREATE TABLE IF NOT EXISTS `vaccine_batches` (
-            `id` INT(11) NOT NULL AUTO_INCREMENT,
-            `vaccine_id` INT(11) NOT NULL,
-            `user_id` INT(11) NOT NULL,
-            `quantity_added` INT(11) NOT NULL DEFAULT 0,
-            `quantity_remaining` INT(11) NOT NULL DEFAULT 0,
-            `manufacture_date` DATE NOT NULL,
-            `expiration_date` DATE NOT NULL,
-            `updated_at` INT(11) NOT NULL,
-            `created_at` VARCHAR(50) NOT NULL,
-            PRIMARY KEY (`id`),
-            KEY `idx_vaccine_batches_vaccine_id` (`vaccine_id`),
-            KEY `idx_vaccine_batches_expiration_date` (`expiration_date`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-
-        $this->db->query($sql);
     }
 
     private function ensureArchiveLogTableExists()
@@ -57,9 +36,14 @@ class Vaccines extends CI_Model {
     
     public function getVaccines()
 	{
+        $has_expiration_date = $this->db->field_exists('expiration_date', 'vaccines');
+        $nearest_expiration_select = $has_expiration_date
+            ? 'v.expiration_date AS nearest_expiration_date'
+            : 'NULL AS nearest_expiration_date';
+
         $sql = "SELECT
                     v.*,
-                    batch_stats.nearest_expiration_date,
+                    {$nearest_expiration_select},
                     COALESCE(usage_stats.used_count, 0) AS used_count
                 FROM vaccines v
                 LEFT JOIN (
@@ -67,12 +51,6 @@ class Vaccines extends CI_Model {
                     FROM vials
                     GROUP BY vaccine_id
                 ) usage_stats ON usage_stats.vaccine_id = v.id
-                LEFT JOIN (
-                    SELECT vaccine_id, MIN(expiration_date) AS nearest_expiration_date
-                    FROM vaccine_batches
-                    WHERE quantity_remaining > 0
-                    GROUP BY vaccine_id
-                ) batch_stats ON batch_stats.vaccine_id = v.id
                 WHERE v.quantity > 0 OR v.deleted = 0";
 
         return $this->db->query($sql)->result_array();
@@ -163,6 +141,8 @@ class Vaccines extends CI_Model {
     public function createVaccine() {
 
         $date = date("F j, Y");
+        $has_manufacture_date = $this->db->field_exists('manufacture_date', 'vaccines');
+        $has_expiration_date = $this->db->field_exists('expiration_date', 'vaccines');
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
@@ -170,10 +150,10 @@ class Vaccines extends CI_Model {
         'type' => $this->input->post('type'),
         'barcode' => $this->input->post('barcode'),
         'name' => $this->input->post('name'),
-        'description' => $this->input->post('description'),
-        'capacity' => $this->input->post('capacity'),
-        'amount' => $this->input->post('amount'),
-        'quantity' => $this->input->post('quantity'),
+        'description' => '',
+        'capacity' => 1,
+        'amount' => 0,
+        'quantity' => 3,
         'manufacturer_company' => $this->input->post('manufacturer_company'),
         'manufacturer_location' => $this->input->post('manufacturer_location'),
         'importer_company' => $this->input->post('importer_company'),
@@ -184,7 +164,21 @@ class Vaccines extends CI_Model {
         'created_at' => $date
         );
 
-        return $this->db->insert('vaccines',$data);
+        if ($has_manufacture_date) {
+            $data['manufacture_date'] = $this->input->post('manufacture_date');
+        }
+
+        if ($has_expiration_date) {
+            $data['expiration_date'] = $this->input->post('expiration_date');
+        }
+
+        $inserted = $this->db->insert('vaccines',$data);
+
+        if (!$inserted) {
+            return false;
+        }
+
+        return (int) $this->db->insert_id();
 
     }
 
@@ -298,6 +292,24 @@ class Vaccines extends CI_Model {
         return $query->num_rows();
     }
 
+    public function getExpiringVaccines($limit = 20)
+    {
+        if (!$this->db->field_exists('expiration_date', 'vaccines')) {
+            return array();
+        }
+
+        return $this->db
+            ->select('v.*, v.name AS vaccine_name, v.barcode AS vaccine_barcode, v.quantity AS quantity_remaining')
+            ->from('vaccines v')
+            ->where('v.quantity >', 0)
+            ->where('v.expiration_date IS NOT NULL', null, false)
+            ->where('v.expiration_date <>', '')
+            ->order_by('v.expiration_date', 'ASC')
+            ->limit((int) $limit)
+            ->get()
+            ->result_array();
+    }
+
     public function getAuditTrailEntries()
     {
         $entries = array_merge(
@@ -322,24 +334,25 @@ class Vaccines extends CI_Model {
 
     private function getStockAuditEntries()
     {
+        $has_manufacture_date = $this->db->field_exists('manufacture_date', 'vaccines');
+        $has_expiration_date = $this->db->field_exists('expiration_date', 'vaccines');
+
         $rows = $this->db
-            ->select('
-                vb.id,
-                vb.vaccine_id,
-                vb.quantity_added,
-                vb.manufacture_date,
-                vb.expiration_date,
-                vb.updated_at,
-                vb.created_at,
+            ->select("
+                v.id,
+                v.id AS vaccine_id,
+                " . ($has_manufacture_date ? "v.manufacture_date" : "NULL AS manufacture_date") . ",
+                " . ($has_expiration_date ? "v.expiration_date" : "NULL AS expiration_date") . ",
+                v.updated_at,
+                v.created_at,
                 v.name AS vaccine_name,
                 v.barcode AS vaccine_barcode,
                 u.first_name,
                 u.last_name
-            ')
-            ->from('vaccine_batches vb')
-            ->join('vaccines v', 'v.id = vb.vaccine_id', 'left')
-            ->join('users u', 'u.id = vb.user_id', 'left')
-            ->order_by('vb.updated_at', 'DESC')
+            ", false)
+            ->from('vaccines v')
+            ->join('users u', 'u.id = v.user_id', 'left')
+            ->order_by('v.updated_at', 'DESC')
             ->get()
             ->result_array();
 
@@ -350,11 +363,11 @@ class Vaccines extends CI_Model {
                 'vaccine_id' => (int) $row['vaccine_id'],
                 'vaccine_name' => (string) $row['vaccine_name'],
                 'vaccine_barcode' => (string) $row['vaccine_barcode'],
-                'quantity' => (int) $row['quantity_added'],
+                'quantity' => 3,
                 'event_date' => (string) $row['created_at'],
                 'event_timestamp' => (int) $row['updated_at'],
-                'date_note' => 'Inserted / restocked',
-                'details' => trim('Restocked by ' . $row['first_name'] . ' ' . $row['last_name']),
+                'date_note' => 'Inserted',
+                'details' => trim('Added by ' . $row['first_name'] . ' ' . $row['last_name']),
                 'reference_date' => !empty($row['expiration_date']) ? date('M j, Y', strtotime($row['expiration_date'])) : '',
                 'reference_label' => 'Expires',
                 'sort_timestamp' => (int) $row['updated_at']

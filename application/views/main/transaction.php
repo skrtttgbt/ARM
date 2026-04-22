@@ -305,6 +305,120 @@
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
+                                <h4 class="card-title">Vaccine Audit Trail</h4>
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label for="auditTypeFilter" class="form-label">Filter Status</label>
+                                        <select id="auditTypeFilter" class="form-control">
+                                            <option value="">All Status</option>
+                                            <option value="IN STOCK">IN STOCK</option>
+                                            <option value="USED">USED</option>
+                                            <option value="DAMAGE">DAMAGE</option>
+                                            <option value="EXPIRED">EXPIRED</option>
+                                            <option value="RECALL">RECALL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="auditVaccineFilter" class="form-label">Filter Vaccine</label>
+                                        <select id="auditVaccineFilter" class="form-control">
+                                            <option value="">All Vaccines</option>
+                                            <?php
+                                            $audit_vaccine_options = array();
+                                            if (!empty($audit_trail_entries)) {
+                                                foreach ($audit_trail_entries as $entry) {
+                                                    if (!empty($entry['vaccine_name'])) {
+                                                        $audit_label = trim($entry['vaccine_name']);
+                                                        if (!empty($entry['vaccine_barcode'])) {
+                                                            $audit_label .= ' (' . trim($entry['vaccine_barcode']) . ')';
+                                                        }
+                                                        $audit_vaccine_options[$audit_label] = true;
+                                                    }
+                                                }
+                                            }
+                                            ksort($audit_vaccine_options);
+                                            ?>
+                                            <?php if (!empty($audit_vaccine_options)): ?>
+                                                <?php foreach (array_keys($audit_vaccine_options) as $audit_vaccine_name): ?>
+                                                    <option value="<?php echo htmlspecialchars($audit_vaccine_name); ?>"><?php echo htmlspecialchars($audit_vaccine_name); ?></option>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="auditDateFilter" class="form-label">Search Date</label>
+                                        <input type="text" id="auditDateFilter" class="form-control" placeholder="Example: Apr 2026 or Apr 20">
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table id="vaccine_audit_table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Status</th>
+                                                <th>Vaccine</th>
+                                                <th>Barcode</th>
+                                                <th>Quantity</th>
+                                                <th>Date</th>
+                                                <th>Date Info</th>
+                                                <th>Reference</th>
+                                                <th>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($audit_trail_entries)): ?>
+                                                <?php foreach ($audit_trail_entries as $entry): ?>
+                                                    <?php
+                                                    $badge_class = 'secondary';
+                                                    $audit_label = trim((string) $entry['vaccine_name']);
+                                                    if (!empty($entry['vaccine_barcode'])) {
+                                                        $audit_label .= ' (' . trim((string) $entry['vaccine_barcode']) . ')';
+                                                    }
+                                                    if ($entry['event_type'] === 'IN STOCK') {
+                                                        $badge_class = 'success';
+                                                    } elseif ($entry['event_type'] === 'USED') {
+                                                        $badge_class = 'primary';
+                                                    } elseif ($entry['event_type'] === 'DAMAGE') {
+                                                        $badge_class = 'danger';
+                                                    } elseif ($entry['event_type'] === 'EXPIRED') {
+                                                        $badge_class = 'warning';
+                                                    } elseif ($entry['event_type'] === 'RECALL') {
+                                                        $badge_class = 'dark';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><span class="badge bg-<?php echo $badge_class; ?>"><?php echo htmlspecialchars($entry['event_type']); ?></span></td>
+                                                        <td><?php echo htmlspecialchars($audit_label); ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['vaccine_barcode']); ?></td>
+                                                        <td><?php echo (int) $entry['quantity']; ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['event_date']); ?></td>
+                                                        <td><?php echo htmlspecialchars($entry['date_note']); ?></td>
+                                                        <td>
+                                                            <?php
+                                                            if (!empty($entry['reference_label']) && !empty($entry['reference_date'])) {
+                                                                echo htmlspecialchars($entry['reference_label'] . ': ' . $entry['reference_date']);
+                                                            } else {
+                                                                echo '<span class="text-muted">-</span>';
+                                                            }
+                                                            ?>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($entry['details']); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="8" class="text-center text-muted">No audit trail records found.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
                                 <h4 class="card-title">Completed Vaccination Schedules</h4>
                                 <div class="table-responsive">
                                     <table id="completed-schedules-table" class="table border table-striped table-bordered text-nowrap" style="width:100%">
@@ -474,10 +588,51 @@
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
+        var auditTable = $('#vaccine_audit_table').DataTable({
+            order: [[4, 'desc']]
+        });
         $('#completed-schedules-table').DataTable();
         $('#recent-incidents-table').DataTable();
         $('#recent-patients-table').DataTable();
         $('#recent-vaccinations-table').DataTable();
+
+        $.fn.dataTable.ext.search.push(function(settings, data) {
+            if (settings.nTable.id !== 'vaccine_audit_table') {
+                return true;
+            }
+
+            var selectedType = ($('#auditTypeFilter').val() || '').toLowerCase();
+            var selectedVaccine = ($('#auditVaccineFilter').val() || '').toLowerCase();
+            var dateKeyword = ($('#auditDateFilter').val() || '').toLowerCase();
+
+            var rowType = (data[0] || '').toLowerCase();
+            var rowVaccine = (data[1] || '').toLowerCase();
+            var rowDate = (data[4] || '').toLowerCase();
+            var rowDateInfo = (data[5] || '').toLowerCase();
+            var rowReference = (data[6] || '').toLowerCase();
+
+            if (selectedType && rowType.indexOf(selectedType) === -1) {
+                return false;
+            }
+
+            if (selectedVaccine && rowVaccine !== selectedVaccine) {
+                return false;
+            }
+
+            if (dateKeyword && rowDate.indexOf(dateKeyword) === -1 && rowDateInfo.indexOf(dateKeyword) === -1 && rowReference.indexOf(dateKeyword) === -1) {
+                return false;
+            }
+
+            return true;
+        });
+
+        $('#auditTypeFilter, #auditVaccineFilter').on('change', function() {
+            auditTable.draw();
+        });
+
+        $('#auditDateFilter').on('keyup change', function() {
+            auditTable.draw();
+        });
     </script>
 </body>
 

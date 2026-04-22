@@ -26,7 +26,6 @@ class DashboardController extends CI_Controller {
     public $vaccines;
     public $vials;
     public $schedules;
-    public $vaccine_batches;
 
     public function __construct()
     {
@@ -52,7 +51,6 @@ class DashboardController extends CI_Controller {
         $this->load->model('Schedules');
         $this->load->model('Vaccines');
         $this->load->model('Vials');
-        $this->load->model('Vaccine_batches', 'vaccine_batches');
 
         // Load the dashboard content
         $data['user_info'] = $this->users->getUser($session_id);
@@ -65,7 +63,7 @@ class DashboardController extends CI_Controller {
         $data['forecast_data'] = $this->getVialForecastData();
         $data['vaccine_forecast_data'] = $this->getVaccineForecastData();
         $data['vaccine_archive_summary'] = $this->getVaccineArchiveSummary();
-        $data['expiring_batches'] = $this->vaccine_batches->getExpiringBatches(5);
+        $data['expiring_batches'] = $this->vaccines->getExpiringVaccines(5);
         $data['chart_data'] = $this->getChartData();
         
         $this->load->view('main/dashboard', $data);
@@ -245,7 +243,7 @@ class DashboardController extends CI_Controller {
         }
 
         $vaccine_rows = $this->db
-            ->select('name')
+            ->select('id, name, barcode')
             ->from('vaccines')
             ->where('name IS NOT NULL', null, false)
             ->where('name <>', '')
@@ -254,13 +252,18 @@ class DashboardController extends CI_Controller {
             ->result_array();
 
         foreach ($vaccine_rows as $vaccine_row) {
-            $vaccine_name = (string) $vaccine_row['name'];
-            $vaccine_series[$vaccine_name] = array_fill(0, count($month_keys), 0);
+            $vaccine_key = (string) ((int) $vaccine_row['id']);
+            $vaccine_series[$vaccine_key] = [
+                'label' => $this->formatVaccineDisplayLabel($vaccine_row['name'], $vaccine_row['barcode']),
+                'data' => array_fill(0, count($month_keys), 0)
+            ];
         }
 
         $this->db->select("
             DATE_FORMAT(s.schedule, '%Y-%m') AS month_key,
+            va.id AS vaccine_id,
             va.name AS vaccine_name,
+            va.barcode AS vaccine_barcode,
             COUNT(*) AS total_count
         ", false);
         $this->db->from('schedules s');
@@ -271,7 +274,7 @@ class DashboardController extends CI_Controller {
         $this->db->where('s.schedule <>', '');
         $this->db->where('va.name IS NOT NULL', null, false);
         $this->db->where('va.name <>', '');
-        $this->db->group_by(["DATE_FORMAT(s.schedule, '%Y-%m')", 'va.name'], false);
+        $this->db->group_by(["DATE_FORMAT(s.schedule, '%Y-%m')", 'va.id', 'va.name', 'va.barcode'], false);
         $rows = $this->db->get()->result_array();
 
         $index_by_key = array_flip($month_keys);
@@ -282,15 +285,18 @@ class DashboardController extends CI_Controller {
 
             $idx = $index_by_key[$row['month_key']];
             $count = (int) $row['total_count'];
-            $vaccine_name = (string) $row['vaccine_name'];
+            $vaccine_key = (string) ((int) $row['vaccine_id']);
 
             $overall_actual[$idx] += $count;
 
-            if (!isset($vaccine_series[$vaccine_name])) {
-                $vaccine_series[$vaccine_name] = array_fill(0, count($month_keys), 0);
+            if (!isset($vaccine_series[$vaccine_key])) {
+                $vaccine_series[$vaccine_key] = [
+                    'label' => $this->formatVaccineDisplayLabel($row['vaccine_name'], $row['vaccine_barcode']),
+                    'data' => array_fill(0, count($month_keys), 0)
+                ];
             }
 
-            $vaccine_series[$vaccine_name][$idx] = $count;
+            $vaccine_series[$vaccine_key]['data'][$idx] = $count;
         }
 
         $overall_prediction = $this->buildSarimaPredictionSeries($overall_actual, $forecast_months);
@@ -316,10 +322,11 @@ class DashboardController extends CI_Controller {
         $chart_prediction[] = end($overall_prediction);
 
         $chart_vaccine_series = [];
-        foreach ($vaccine_series as $vaccine_name => $series) {
+        foreach ($vaccine_series as $series_meta) {
+            $series = $series_meta['data'];
             $series[] = null;
             $chart_vaccine_series[] = [
-                'label' => $vaccine_name,
+                'label' => $series_meta['label'],
                 'data' => $series
             ];
         }
@@ -375,6 +382,18 @@ class DashboardController extends CI_Controller {
             'patients_per_vial' => $patients_per_vial,
             'next_month_required_vials' => $next_month_required_vials
         ];
+    }
+
+    private function formatVaccineDisplayLabel($name, $barcode)
+    {
+        $name = trim((string) $name);
+        $barcode = trim((string) $barcode);
+
+        if ($name === '') {
+            return $barcode !== '' ? 'Barcode: ' . $barcode : 'Unnamed Vaccine';
+        }
+
+        return $barcode !== '' ? $name . ' (' . $barcode . ')' : $name;
     }
 
     private function getVaccineArchiveSummary()

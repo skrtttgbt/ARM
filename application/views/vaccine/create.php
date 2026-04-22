@@ -303,6 +303,11 @@ $CI->load->library('session');
                     </div>
                 <?php endif; ?>
 
+                <div class="btn-group mb-3" role="group" aria-label="Vaccine Navigation">
+                    <a href="<?php echo base_url(); ?>vaccine" class="btn btn-outline-primary">Vaccine List</a>
+                    <a href="<?php echo base_url(); ?>vaccine/archive" class="btn btn-outline-primary">Archive</a>
+                </div>
+
                 <h4 class="card-title">Create Vaccine</h4>
                 <div class="row">
                     <div class="col-lg-12 ">
@@ -379,9 +384,9 @@ $CI->load->library('session');
                                         </div>
 
                                         <div class="form-group col-md-6 mt-2">
-                                            <label for="vaccineQuantity" class="col-form-label">Quantity</label>
-                                            <input name="quantity" type="number" min="0" value="<?php echo set_value('quantity', '0'); ?>" class="form-control <?php echo (form_error('quantity') ? "is-invalid" : ""); ?>" id="vaccineQuantity">
-                                            <?php echo form_error('quantity', '<div class="invalid-feedback">', '</div>'); ?>
+                                            <label class="col-form-label">Initial Stock</label>
+                                            <input type="text" value="3" class="form-control" disabled>
+                                            <small class="form-text text-muted">Each new vaccine entry automatically starts with 3 stock.</small>
                                         </div>
                                     </div>
 
@@ -396,6 +401,20 @@ $CI->load->library('session');
                                                 <option value="5" <?php echo set_select('amount', '5'); ?>>5</option>
                                             </select>
                                             <?php echo form_error('amount', '<div class="invalid-feedback d-block">', '</div>'); ?>
+                                        </div>
+
+                                        <div class="form-group col-md-6 mt-2">
+                                            <label for="manufactureDate" class="col-form-label">Manufacture Date</label>
+                                            <input name="manufacture_date" type="date" value="<?php echo set_value('manufacture_date'); ?>" class="form-control <?php echo (form_error('manufacture_date') ? "is-invalid" : ""); ?>" id="manufactureDate">
+                                            <?php echo form_error('manufacture_date', '<div class="invalid-feedback">', '</div>'); ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="form-group col-md-6 mt-2">
+                                            <label for="expirationDate" class="col-form-label">Expiration Date</label>
+                                            <input name="expiration_date" type="date" value="<?php echo set_value('expiration_date'); ?>" class="form-control <?php echo (form_error('expiration_date') ? "is-invalid" : ""); ?>" id="expirationDate">
+                                            <?php echo form_error('expiration_date', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 

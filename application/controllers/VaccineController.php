@@ -2,9 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class VaccineController extends CI_Controller {
-    private const VIALS_PER_BOX = 3;
-    private const PATIENTS_PER_VIAL = 3;
-    private const PATIENTS_PER_BOX = self::VIALS_PER_BOX * self::PATIENTS_PER_VIAL;
+    private const FIXED_STOCK_PER_ADD = 3;
     
     // Declare properties to avoid PHP 8.2 deprecation warnings
     public $benchmark;
@@ -29,7 +27,6 @@ class VaccineController extends CI_Controller {
     public $vials;
     public $incidents;
     public $schedules;
-    public $vaccine_batches;
 
     public function __construct() {
 
@@ -39,7 +36,6 @@ class VaccineController extends CI_Controller {
         $this->load->model('Users');
         $this->load->model('Vaccines');
         $this->load->model('Vials');
-        $this->load->model('Vaccine_batches', 'vaccine_batches');
         $this->load->library('session');
         $this->load->helper('url');
         $this->load->library('form_validation');
@@ -57,7 +53,7 @@ class VaccineController extends CI_Controller {
 
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vaccines'] = $this->vaccines->getVaccines();
-        $data['expiring_batches'] = $this->vaccine_batches->getExpiringBatches();
+        $data['expiring_batches'] = $this->vaccines->getExpiringVaccines();
         $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
 
         $this->load->view('vaccine/index', $data);
@@ -74,11 +70,74 @@ class VaccineController extends CI_Controller {
 
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vaccines'] = $this->vaccines->getArchives();
+        $data['expiring_batches'] = $this->vaccines->getExpiringVaccines();
+        $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
 
         $this->load->view('vaccine/archive', $data);
     }
 
     public function create() {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        $session_id = $this->session->userdata('user_id');
+        $data['user_info'] = $this->users->getUser($session_id);
+        $data['vaccines'] = $this->vaccines->getVaccines();
+        $data['expiring_batches'] = $this->vaccines->getExpiringVaccines();
+        $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
+
+        $this->form_validation->set_rules('barcode', 'Barcode', 'trim|required');
+        $this->form_validation->set_rules('type', 'Vaccine Type', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('name', 'Vaccine Name', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('manufacture_date', 'Manufacture Date', 'trim|required');
+        $this->form_validation->set_rules('expiration_date', 'Expiration Date', 'trim|required');
+
+        if ($this->form_validation->run() === FALSE) {
+            $this->load->view('vaccine/index', $data);
+            return;
+        }
+
+        $barcode = trim((string) $this->input->post('barcode'));
+        $manufacture_date = trim((string) $this->input->post('manufacture_date'));
+        $expiration_date = trim((string) $this->input->post('expiration_date'));
+
+        if ($barcode === '') {
+            $this->session->set_flashdata('barcode_error', 'Barcode is empty');
+            redirect('vaccine');
+            return;
+        }
+
+        if ($this->vaccines->getVaccineByBarcode($barcode)) {
+            $this->session->set_flashdata('barcode_error', 'Barcode already exists');
+            redirect('vaccine');
+            return;
+        }
+
+        if (!$this->isValidDateValue($manufacture_date) || !$this->isValidDateValue($expiration_date)) {
+            $this->session->set_flashdata('message', 'Manufacture date and expiration date are required.');
+            redirect('vaccine');
+            return;
+        }
+
+        if (strtotime($expiration_date) <= strtotime($manufacture_date)) {
+            $this->session->set_flashdata('message', 'Expiration date must be later than the manufacture date.');
+            redirect('vaccine');
+            return;
+        }
+
+        $this->db->trans_start();
+        $created_vaccine_id = $this->vaccines->createVaccine();
+        $this->db->trans_complete();
+
+        if (!$created_vaccine_id || !$this->db->trans_status()) {
+            $this->session->set_flashdata('message', 'Unable to create vaccine right now.');
+            redirect('vaccine');
+            return;
+        }
+
+        $this->session->set_flashdata('message', 'Vaccine created successfully.');
         redirect('vaccine');
     }
 
@@ -204,56 +263,7 @@ class VaccineController extends CI_Controller {
     }
 
     public function addQuantity($id) {
-        if (!$this->session->userdata('user_id')) {
-            redirect('login');
-            return;
-        }
-
-        $session_id = $this->session->userdata('user_id');
-        $user_info = $this->users->getUser($session_id);
-
-        if (!$user_info || (int) $user_info['level'] !== 0) {
-            $this->session->set_flashdata('message', 'Only the super admin can add vaccine quantity.');
-            redirect('vaccine');
-            return;
-        }
-
-        $boxes = (int) $this->input->post('quantity');
-        $manufacture_date = trim((string) $this->input->post('manufacture_date'));
-        $expiration_date = trim((string) $this->input->post('expiration_date'));
-
-        if ($boxes <= 0) {
-            $this->session->set_flashdata('message', 'Boxes must be greater than 0.');
-            redirect('vaccine');
-            return;
-        }
-
-        if (!$this->isValidDateValue($manufacture_date) || !$this->isValidDateValue($expiration_date)) {
-            $this->session->set_flashdata('message', 'Manufacture date and expiration date are required.');
-            redirect('vaccine');
-            return;
-        }
-
-        if (strtotime($expiration_date) <= strtotime($manufacture_date)) {
-            $this->session->set_flashdata('message', 'Expiration date must be later than the manufacture date.');
-            redirect('vaccine');
-            return;
-        }
-
-        $patient_quantity = $boxes * self::PATIENTS_PER_BOX;
-
-        $this->db->trans_start();
-        $this->vaccines->addQuantity($id, $patient_quantity);
-        $this->vaccine_batches->addBatch($id, $session_id, $patient_quantity, $manufacture_date, $expiration_date);
-        $this->db->trans_complete();
-
-        if (!$this->db->trans_status()) {
-            $this->session->set_flashdata('message', 'Unable to add quantity right now.');
-            redirect('vaccine');
-            return;
-        }
-
-        $this->session->set_flashdata('message', 'Vaccine stock added successfully.');
+        $this->session->set_flashdata('message', 'Create a new vaccine record per box instead of adding quantity.');
         redirect('vaccine');
     }
 

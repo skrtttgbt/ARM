@@ -355,6 +355,10 @@
                                             <?php if (!empty($expiring_batches)): ?>
                                                 <?php foreach ($expiring_batches as $batch): ?>
                                                     <?php
+                                                    $batch_label = trim((string) $batch['vaccine_name']);
+                                                    if (!empty($batch['vaccine_barcode'])) {
+                                                        $batch_label .= ' (' . trim((string) $batch['vaccine_barcode']) . ')';
+                                                    }
                                                     $days_to_expiry = (int) floor((strtotime($batch['expiration_date']) - strtotime(date('Y-m-d'))) / 86400);
                                                     $expiry_status = 'OK';
                                                     $expiry_class = 'success';
@@ -368,7 +372,7 @@
                                                     }
                                                     ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($batch['vaccine_name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($batch_label); ?></td>
                                                         <td><?php echo (int) $batch['quantity_remaining']; ?></td>
                                                         <td><?php echo date('M j, Y', strtotime($batch['expiration_date'])); ?></td>
                                                         <td><span class="badge bg-<?php echo $expiry_class; ?>"><?php echo $expiry_status; ?></span></td>
@@ -392,7 +396,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">Vaccine Patient Progress</h5>
-                                <p class="text-muted mb-3">Stock is tracked by patients. Each vial can serve 3 patients.</p>
+                                <p class="text-muted mb-3">Stock is tracked per box. Each box has 3 vials, and each vial can serve 3 patients, for a total of 9 patients per box.</p>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped mb-0">
                                         <thead>
@@ -406,14 +410,18 @@
                                             <?php if (!empty($vaccines)): ?>
                                                 <?php foreach ($vaccines as $vaccine): ?>
                                                     <?php
-                                                    $patients_per_vial = 3;
+                                                    $vaccine_label = trim((string) $vaccine['name']);
+                                                    if (!empty($vaccine['barcode'])) {
+                                                        $vaccine_label .= ' (' . trim((string) $vaccine['barcode']) . ')';
+                                                    }
+                                                    $patients_per_box = 9;
                                                     $patients_left = (int) $vaccine['quantity'];
-                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $patients_per_vial;
+                                                    $current_patient_progress = ((int) $vaccine['used_count']) % $patients_per_box;
                                                     ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($vaccine['name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($vaccine_label); ?></td>
                                                         <td><?php echo $patients_left; ?></td>
-                                                        <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $patients_per_vial; ?></span></td>
+                                                        <td><span class="badge bg-info text-dark"><?php echo $current_patient_progress . '/' . $patients_per_box; ?></span></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php else: ?>

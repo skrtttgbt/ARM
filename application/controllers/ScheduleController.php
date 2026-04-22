@@ -26,7 +26,6 @@ class ScheduleController extends CI_Controller {
     public $email;
     public $zend;
     public $vaccines;
-    public $vaccine_batches;
 
     public function __construct() {
         parent::__construct();
@@ -37,7 +36,6 @@ class ScheduleController extends CI_Controller {
         $this->load->model('Patients');
         $this->load->model('Vials');
         $this->load->model('Vaccines');
-        $this->load->model('Vaccine_batches', 'vaccine_batches');
         $this->load->library('session');
         $this->load->helper('url');
         $this->load->library('form_validation');
@@ -179,7 +177,6 @@ class ScheduleController extends CI_Controller {
             $this->schedules->updateScheduleOngoingByVialId($id, $created_vial_id);
 
             $this->vaccines->deductQuantity($vaccine['id'], 1);
-            $this->vaccine_batches->deductQuantity($vaccine['id'], 1);
 
             $this->db->trans_complete();
 

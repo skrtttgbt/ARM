@@ -58,6 +58,7 @@ class TransactionsController extends CI_Controller {
         $data['recent_incidents'] = $this->getRecentIncidents();
         $data['recent_patients'] = $this->getRecentPatients();
         $data['recent_vaccinations'] = $this->getRecentVaccinations();
+        $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
         
         $this->load->view('main/transaction', $data);
     }

@@ -396,6 +396,61 @@ $CI->load->library('session');
                     </div>
                     <!-- column -->
                 </div>
+
+                <h4 class="card-title mt-4">Expiration List</h4>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table border table-striped table-bordered text-nowrap" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Vaccine</th>
+                                                <th>Barcode</th>
+                                                <th>Vaccine Remaining</th>
+                                                <th>Manufacture Date</th>
+                                                <th>Expiration Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($expiring_batches)): ?>
+                                                <?php foreach ($expiring_batches as $batch): ?>
+                                                    <?php
+                                                    $days_to_expiry = (int) floor((strtotime($batch['expiration_date']) - strtotime(date('Y-m-d'))) / 86400);
+                                                    $batch_status = 'OK';
+                                                    $batch_class = 'success';
+
+                                                    if ($days_to_expiry < 0) {
+                                                        $batch_status = 'Expired';
+                                                        $batch_class = 'danger';
+                                                    } elseif ($days_to_expiry <= 30) {
+                                                        $batch_status = 'Expiring soon';
+                                                        $batch_class = 'warning';
+                                                    }
+                                                    ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($batch['vaccine_name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($batch['vaccine_barcode']); ?></td>
+                                                        <td><?php echo (int) $batch['quantity_remaining']; ?></td>
+                                                        <td><?php echo date('M j, Y', strtotime($batch['manufacture_date'])); ?></td>
+                                                        <td><?php echo date('M j, Y', strtotime($batch['expiration_date'])); ?></td>
+                                                        <td><span class="badge bg-<?php echo $batch_class; ?>"><?php echo $batch_status; ?></span></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted">No expiration batches recorded yet.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <!-- ============================================================== -->
             <!-- End Container fluid  -->
@@ -441,7 +496,7 @@ $CI->load->library('session');
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/datatables.net-bs4/js/dataTables.responsive.min.js"></script>
     <script>
-        $('#default_order').DataTable();
+        var archiveTable = $('#default_order').DataTable();
     </script>
 </body>
 
