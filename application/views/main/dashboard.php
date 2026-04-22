@@ -438,6 +438,55 @@
                 </div>
 
                 <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Overdue Follow-Up Patients</h5>
+                                <p class="text-muted mb-3">Patients appear here when they still need another dose and have not returned within 4 days after their last completed vaccination.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Patient</th>
+                                                <th>Mobile</th>
+                                                <th>Completed Doses</th>
+                                                <th>Remaining Doses</th>
+                                                <th>Last Vaccination</th>
+                                                <th>Days Since Last Dose</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!empty($overdue_followups)): ?>
+                                                <?php foreach ($overdue_followups as $followup): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($followup['patient_name']); ?></td>
+                                                        <td><?php echo htmlspecialchars($followup['mobile']); ?></td>
+                                                        <td><?php echo (int) $followup['completed_doses'] . '/' . (int) $followup['required_doses']; ?></td>
+                                                        <td><?php echo (int) $followup['remaining_doses']; ?></td>
+                                                        <td><?php echo htmlspecialchars($followup['last_completed_schedule']); ?></td>
+                                                        <td><span class="badge bg-warning text-dark"><?php echo (int) $followup['days_since_last_dose']; ?> days</span></td>
+                                                        <td>
+                                                            <form action="<?php echo base_url('dashboard/remind_overdue/' . (int) $followup['incident_id']); ?>" method="post" class="d-inline">
+                                                                <button type="submit" class="btn btn-sm btn-warning">Remind</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr>
+                                                    <td colspan="7" class="text-center text-muted">No overdue follow-up patients right now.</td>
+                                                </tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
                     <div class="col-lg-7">
                         <div class="card">
                             <div class="card-body">
@@ -475,7 +524,7 @@
                                         <div class="border rounded p-3 h-100">
                                             <small class="text-muted d-block mb-1">Required Vials</small>
                                             <h2 class="mb-1"><?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?></h2>
-                                            <small class="text-muted">Rounded up to cover all predicted patients</small>
+                                            <small class="text-muted">Monthly forecast uses 1 vial per patient.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -483,10 +532,10 @@
                                 <div class="alert alert-light border mt-3 mb-0" role="alert">
                                     <h6 class="mb-2">Vial Formula</h6>
                                     <p class="mb-2 text-dark">
-                                        Required Vials = Ceiling(Predicted Patients / <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>)
+                                        Required Vials = Predicted Patients x <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>
                                     </p>
                                     <p class="mb-0 text-muted">
-                                        <?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?> = Ceiling(<?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?> / <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>)
+                                        <?php echo (int) $vaccine_forecast_data['next_month_required_vials']; ?> = <?php echo (int) $vaccine_forecast_data['predicted_next_month']; ?> x <?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?>
                                     </p>
                                 </div>
                             </div>
@@ -517,7 +566,7 @@
                                     </div>
                                     <div class="col-12">
                                         <div class="border rounded p-2 h-100">
-                                            <small class="text-muted d-block">Patients Per Vial</small>
+                                            <small class="text-muted d-block">Vials Per Patient</small>
                                             <strong><?php echo (int) $vaccine_forecast_data['patients_per_vial']; ?></strong>
                                         </div>
                                     </div>
@@ -530,7 +579,7 @@
                                     <div class="col-12">
                                         <div class="border rounded p-2 h-100">
                                             <small class="text-muted d-block">Formula Used</small>
-                                            <strong>Ceiling(Predicted Patients / Patients Per Vial)</strong>
+                                            <strong>Predicted Patients x Vials Per Patient</strong>
                                         </div>
                                     </div>
                                 </div>
@@ -681,7 +730,4 @@
 </body>
 
 </html>
-
-
-
 

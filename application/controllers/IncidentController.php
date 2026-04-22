@@ -99,8 +99,30 @@ class IncidentController extends CI_Controller {
         }
         else
         {
-            $this->incidents->createIncident();
-            $this->session->set_flashdata('message', 'Incident is created.');
+            $result = $this->incidents->createIncident();
+
+            if (empty($result['created'])) {
+                $this->session->set_flashdata('error', 'Incident could not be created.');
+                redirect('incident/create/' . $id);
+                return;
+            }
+
+            if (!empty($result['sms_sent'])) {
+                $this->session->set_flashdata('message', 'Incident is created and schedule SMS notification was sent.');
+            } else {
+                $sms_error_message = 'Incident is created, but schedule SMS notification was not sent.';
+
+                if (!empty($result['reason'])) {
+                    if ($result['reason'] === 'invalid_mobile') {
+                        $sms_error_message = 'Incident is created, but schedule SMS notification was not sent because the patient mobile number is invalid.';
+                    } elseif ($result['reason'] === 'sms_failed') {
+                        $sms_error_message = 'Incident is created, but schedule SMS notification was not sent because the UniSMS request failed.';
+                    }
+                }
+
+                $this->session->set_flashdata('message', $sms_error_message);
+            }
+
             redirect('incident');
         }
     }
@@ -140,8 +162,30 @@ class IncidentController extends CI_Controller {
         }
         else
         {
-            $this->incidents->createSchedule();
-            $this->session->set_flashdata('message', 'Schedule is created.');
+            $result = $this->incidents->createSchedule();
+
+            if (empty($result['created'])) {
+                $this->session->set_flashdata('error', 'Schedule could not be created.');
+                redirect('incident/create_schedule/' . $id);
+                return;
+            }
+
+            if (!empty($result['sms_sent'])) {
+                $this->session->set_flashdata('message', 'Schedule is created and SMS notification was sent.');
+            } else {
+                $sms_error_message = 'Schedule is created, but SMS notification was not sent.';
+
+                if (!empty($result['reason'])) {
+                    if ($result['reason'] === 'invalid_mobile') {
+                        $sms_error_message = 'Schedule is created, but SMS notification was not sent because the patient mobile number is invalid.';
+                    } elseif ($result['reason'] === 'sms_failed') {
+                        $sms_error_message = 'Schedule is created, but SMS notification was not sent because the UniSMS request failed.';
+                    }
+                }
+
+                $this->session->set_flashdata('message', $sms_error_message);
+            }
+
             redirect('schedule');
         }
     }

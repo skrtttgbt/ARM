@@ -12,6 +12,7 @@ $route['reset_password'] = 'MainController/reset_password';
 
 $route['dashboard'] = 'DashboardController/dashboard';
 $route['dashboard/send_reminders'] = 'DashboardController/send_reminders';
+$route['dashboard/remind_overdue/(:num)'] = 'DashboardController/remind_overdue/$1';
 $route['profile'] = 'ProfileController/index';
 $route['settings'] = 'ProfileController/index';
 

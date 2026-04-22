@@ -64,6 +64,7 @@ class DashboardController extends CI_Controller {
         $data['vaccine_forecast_data'] = $this->getVaccineForecastData();
         $data['vaccine_archive_summary'] = $this->getVaccineArchiveSummary();
         $data['expiring_batches'] = $this->vaccines->getExpiringVaccines(5);
+        $data['overdue_followups'] = $this->getOverdueFollowups();
         $data['chart_data'] = $this->getChartData();
         
         $this->load->view('main/dashboard', $data);
@@ -157,6 +158,50 @@ class DashboardController extends CI_Controller {
         redirect('dashboard');
     }
 
+    public function remind_overdue($incident_id = 0)
+    {
+        if (!$this->session->userdata('user_id')) {
+            redirect('login');
+            return;
+        }
+
+        if ($this->input->method() !== 'post') {
+            redirect('dashboard');
+            return;
+        }
+
+        $this->load->helper('phone');
+        $this->load->helper('unisms');
+
+        $followup = $this->getOverdueFollowupByIncidentId((int) $incident_id);
+        if (!$followup) {
+            $this->session->set_flashdata('message', 'Overdue follow-up record not found.');
+            redirect('dashboard');
+            return;
+        }
+
+        $mobile = normalize_ph_mobile($followup['mobile']);
+        if ($mobile === '') {
+            $this->session->set_flashdata('message', 'Reminder not sent because the patient mobile number is invalid.');
+            redirect('dashboard');
+            return;
+        }
+
+        $message = $this->buildOverdueReminderMessage(
+            $followup['patient_name'],
+            $followup['last_completed_schedule'],
+            (int) $followup['days_since_last_dose']
+        );
+
+        if (send_unisms_sms($mobile, $message)) {
+            $this->session->set_flashdata('message', 'Reminder sent to ' . $followup['patient_name'] . '.');
+        } else {
+            $this->session->set_flashdata('message', 'Reminder could not be sent to ' . $followup['patient_name'] . '.');
+        }
+
+        redirect('dashboard');
+    }
+
     private function buildVaccinationReminderMessage($patient_name, $dose2_date, $dose3_date = null)
     {
         $message = "Dear {$patient_name},\n\n";
@@ -172,6 +217,15 @@ class DashboardController extends CI_Controller {
         $message .= "Reminder: The clinic is open 8:00 AM - 5:00 PM only.";
 
         return $message;
+    }
+
+    private function buildOverdueReminderMessage($patient_name, $last_vaccination_date, $days_overdue)
+    {
+        return "Dear {$patient_name},\n\n"
+            . "Our records show that your follow-up vaccination is overdue.\n"
+            . "Your last completed vaccination was on {$last_vaccination_date}, and it has been {$days_overdue} days since your last dose.\n\n"
+            . "Please return to the clinic as soon as possible for your next vaccination.\n"
+            . "Clinic hours: 8:00 AM - 5:00 PM.";
     }
     
     private function getVialForecastData() {
@@ -333,7 +387,7 @@ class DashboardController extends CI_Controller {
 
         $monthly_prediction_rows = [];
         $prediction_years = [];
-        $patients_per_vial = 3;
+        $vials_per_patient = 1;
 
         foreach ($month_labels as $index => $label) {
             if ($index < $prediction_start_index || !isset($overall_prediction[$index]) || $overall_prediction[$index] === null) {
@@ -349,7 +403,7 @@ class DashboardController extends CI_Controller {
                 'month_label' => $label,
                 'year' => $prediction_year,
                 'predicted_total' => $predicted_value,
-                'required_vials' => (int) ceil($predicted_value / $patients_per_vial)
+                'required_vials' => (int) ceil($predicted_value * $vials_per_patient)
             ];
 
             $prediction_years[$prediction_year] = true;
@@ -358,7 +412,7 @@ class DashboardController extends CI_Controller {
         $next_month_prediction = (int) end($overall_prediction);
         $next_month_key = date('Y-m', strtotime('+1 month'));
         $next_month_year = substr($next_month_key, 0, 4);
-        $next_month_required_vials = (int) ceil($next_month_prediction / $patients_per_vial);
+        $next_month_required_vials = (int) ceil($next_month_prediction * $vials_per_patient);
 
         $monthly_prediction_rows[] = [
             'month_key' => $next_month_key,
@@ -379,7 +433,7 @@ class DashboardController extends CI_Controller {
             'chart_vaccine_series' => $chart_vaccine_series,
             'monthly_prediction_rows' => $monthly_prediction_rows,
             'prediction_years' => array_keys($prediction_years),
-            'patients_per_vial' => $patients_per_vial,
+            'patients_per_vial' => $vials_per_patient,
             'next_month_required_vials' => $next_month_required_vials
         ];
     }
@@ -417,6 +471,86 @@ class DashboardController extends CI_Controller {
             'recall_total' => isset($log_query['recall_total']) ? (int) $log_query['recall_total'] : 0,
             'inventory_adjustment_total' => isset($log_query['inventory_adjustment_total']) ? (int) $log_query['inventory_adjustment_total'] : 0
         ];
+    }
+
+    private function getOverdueFollowups()
+    {
+        $rows = $this->db
+            ->select("
+                i.id AS incident_id,
+                i.dose AS required_doses,
+                p.id AS patient_id,
+                p.patient_first_name,
+                p.patient_last_name,
+                p.mobile,
+                MAX(CASE WHEN s.status = 1 THEN s.schedule ELSE NULL END) AS last_completed_schedule,
+                SUM(CASE WHEN s.status = 1 THEN 1 ELSE 0 END) AS completed_doses
+            ", false)
+            ->from('incidents i')
+            ->join('patients p', 'p.id = i.patient_id', 'left')
+            ->join('schedules s', 's.incident_id = i.id', 'left')
+            ->group_by([
+                'i.id',
+                'i.dose',
+                'p.id',
+                'p.patient_first_name',
+                'p.patient_last_name',
+                'p.mobile'
+            ])
+            ->get()
+            ->result_array();
+
+        $overdue_followups = [];
+        $today = new DateTimeImmutable(date('Y-m-d'));
+
+        foreach ($rows as $row) {
+            $required_doses = (int) $row['required_doses'];
+            $completed_doses = (int) $row['completed_doses'];
+            $last_completed_schedule = trim((string) $row['last_completed_schedule']);
+
+            if ($required_doses <= 1 || $completed_doses <= 0 || $completed_doses >= $required_doses || $last_completed_schedule === '') {
+                continue;
+            }
+
+            $last_schedule_date = DateTimeImmutable::createFromFormat('Y-m-d', date('Y-m-d', strtotime($last_completed_schedule)));
+            if (!$last_schedule_date) {
+                continue;
+            }
+
+            $days_since_last_dose = (int) $last_schedule_date->diff($today)->format('%r%a');
+            if ($days_since_last_dose < 4) {
+                continue;
+            }
+
+            $overdue_followups[] = [
+                'incident_id' => (int) $row['incident_id'],
+                'patient_id' => (int) $row['patient_id'],
+                'patient_name' => trim((string) $row['patient_first_name'] . ' ' . (string) $row['patient_last_name']),
+                'mobile' => (string) $row['mobile'],
+                'required_doses' => $required_doses,
+                'completed_doses' => $completed_doses,
+                'remaining_doses' => max($required_doses - $completed_doses, 0),
+                'last_completed_schedule' => $last_schedule_date->format('M j, Y'),
+                'days_since_last_dose' => $days_since_last_dose
+            ];
+        }
+
+        usort($overdue_followups, function ($left, $right) {
+            return $right['days_since_last_dose'] <=> $left['days_since_last_dose'];
+        });
+
+        return $overdue_followups;
+    }
+
+    private function getOverdueFollowupByIncidentId($incident_id)
+    {
+        foreach ($this->getOverdueFollowups() as $followup) {
+            if ((int) $followup['incident_id'] === (int) $incident_id) {
+                return $followup;
+            }
+        }
+
+        return null;
     }
     
     private function getChartData() {
