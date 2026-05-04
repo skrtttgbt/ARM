@@ -93,7 +93,8 @@ class IncidentController extends CI_Controller {
             $this->form_validation->set_rules('type_other', 'Other Animal Involved', 'trim|required|min_length[2]');
         }
         $this->form_validation->set_rules('bite_date', 'Incident Date', 'trim|required');
-        $this->form_validation->set_rules('bite_place', 'Bite Place', 'trim|required');
+        $this->form_validation->set_rules('bite_or_scratch', 'Bite or Scratch', 'trim|required|in_list[Bite,Scratch]');
+        $this->form_validation->set_rules('bite_place', 'Bite/Scratch Place', 'trim|required');
         $this->form_validation->set_rules('amount', 'Dose Amount', 'trim|required');
 
         if ($this->form_validation->run() == FALSE)

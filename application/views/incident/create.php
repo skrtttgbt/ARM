@@ -398,23 +398,26 @@
                                             <?php echo form_error('bite_date', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
 
-                                        
-                                        <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Bite Place</label>
-                                            <input name="bite_place" type="text" class="form-control <?php echo (form_error('bite_place') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" >
+                                        <div class="form-group col-md-2 mt-2">
+                                            <label for="biteOrScratch" class="col-form-label">Bite/Scratch</label>
+                                            <select class="form-select <?php echo (form_error('bite_or_scratch') ? "is-invalid" : ""); ?>" name="bite_or_scratch" id="biteOrScratch">
+                                                <option value="Bite" <?php echo set_select('bite_or_scratch', 'Bite', TRUE); ?>>Bite</option>
+                                                <option value="Scratch" <?php echo set_select('bite_or_scratch', 'Scratch'); ?>>Scratch</option>
+                                            </select>
+                                            <?php echo form_error('bite_or_scratch', '<div class="invalid-feedback">', '</div>'); ?>
+                                        </div>
+
+                                        <div class="form-group col-md-4 mt-2">
+                                            <label for="biteScratchPlace" class="col-form-label">Bite/Scratch Place</label>
+                                            <input name="bite_place" type="text" value="<?php echo set_value('bite_place'); ?>" class="form-control <?php echo (form_error('bite_place') ? "is-invalid" : ""); ?>" id="biteScratchPlace" >
                                             <?php echo form_error('bite_place', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="form-group mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Dose Amount</label>
-                                            <select class="form-select <?php echo (form_error('amount') ? "is-invalid" : ""); ?>" name="amount">
-                                                <option value="1">1</option>
-                                                <option value="2">2</option>
-                                                <option value="3">3</option>
-                                                <option value="4">4</option>
-                                                <option value="5">5</option>
-                                            </select>
+                                            <label for="doseAmount" class="col-form-label">Dose Amount</label>
+                                            <input type="hidden" name="amount" value="3">
+                                            <input type="text" value="3" class="form-control" id="doseAmount" disabled>
                                             <?php echo form_error('amount', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
@@ -492,5 +495,3 @@
 </body>
 
 </html>
-
-

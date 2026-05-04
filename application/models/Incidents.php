@@ -49,14 +49,17 @@ class Incidents extends CI_Model {
         if ($animal_type === 'Other') {
             $animal_type = $this->input->post('type_other');
         }
+        $bite_or_scratch = trim((string) $this->input->post('bite_or_scratch'));
+        $bite_place = trim((string) $this->input->post('bite_place'));
+        $bite_site = $bite_or_scratch . '/' . $bite_place;
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
         'patient_id' => $patient_id,
-        'dose' => $this->input->post('amount'),
+        'dose' => 3,
         'animal_type' => $animal_type,
         'bite_date' => $schedule_date,
-        'bite_site' => $this->input->post('bite_place'),
+        'bite_site' => $bite_site,
         'status' => 0,
         'updated_at' => time(),
         'created_at' => $date
