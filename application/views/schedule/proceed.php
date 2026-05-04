@@ -334,7 +334,7 @@
                                                 <td><?php echo htmlspecialchars($incident['animal_type']); ?></td>
                                             </tr>
                                             <tr>
-                                                <th>Bite Date</th>
+                                                <th>Incident Date</th>
                                                 <td><?php echo htmlspecialchars($incident['bite_date']); ?></td>
                                             </tr>
                                             <tr>
@@ -561,7 +561,6 @@
 </body>
 
 </html>
-
 
 
 

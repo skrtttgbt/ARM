@@ -441,7 +441,7 @@
                                             <tr>
                                                 <th>Patient Name</th>
                                                 <th>Attendee</th>
-                                                <th>Bite Date</th>
+                                                <th>Incident Date</th>
                                                 <th>Vaccination Date</th>
                                             </tr>
                                         </thead>
@@ -531,6 +531,5 @@
 </body>
 
 </html>
-
 
 

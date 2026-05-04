@@ -352,7 +352,7 @@
 
                                     <div class="row">
                                         <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Bite Date</label>
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Incident Date</label>
                                             <input value="<?php echo $incident['bite_date']; ?>" name="bite_date" type="text" class="form-control" id="inputHorizontalSuccess" disabled>
                                             <?php echo form_error('bite_date', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
@@ -456,7 +456,6 @@
 </body>
 
 </html>
-
 
 
 

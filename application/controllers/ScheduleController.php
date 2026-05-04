@@ -172,11 +172,18 @@ class ScheduleController extends CI_Controller {
                 return;
             }
 
+            // Get current used_count BEFORE creating the new vial
+            $used_count_before = $this->vaccines->getUsedDoseCount($vaccine['id']);
+
             $this->db->trans_start();
             $created_vial_id = $this->vials->createVialForVaccine((int) $session_id, (int) $vaccine['id']);
             $this->schedules->updateScheduleOngoingByVialId($id, $created_vial_id);
 
-            $this->vaccines->deductQuantity($vaccine['id'], 1);
+            // Deduct 1 from quantity only every 3 scans (every completed vial)
+            $used_count_after = $used_count_before + 1;
+            if ($used_count_after % 3 === 0) {
+                $this->vaccines->deductQuantity($vaccine['id'], 1);
+            }
 
             $this->db->trans_complete();
 

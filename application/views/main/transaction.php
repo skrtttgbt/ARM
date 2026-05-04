@@ -458,7 +458,7 @@
                                             <tr>
                                                 <th>Patient</th>
                                                 <th>Animal Type</th>
-                                                <th>Bite Date</th>
+                                                <th>Incident Date</th>
                                                 <th>Created By</th>
                                             </tr>
                                         </thead>
@@ -637,7 +637,6 @@
 </body>
 
 </html>
-
 
 
 

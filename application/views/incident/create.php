@@ -377,6 +377,8 @@
                                             <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type">
                                                 <option value="Dog">Dog</option>
                                                 <option value="Cat">Cat</option>
+                                                <option value="Snake">Snake</option>
+                                                <option value="Rat">Rat</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
@@ -384,7 +386,7 @@
 
                                     <div class="row">
                                         <div class="form-group col-md-6 mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Bite Date</label>
+                                            <label for="inputHorizontalSuccess" class="col-form-label">Incident Date</label>
                                             <input name="bite_date" type="date" class="form-control <?php echo (form_error('bite_date') ? "is-invalid" : ""); ?>" id="inputHorizontalSuccess" >
                                             <?php echo form_error('bite_date', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
@@ -471,7 +473,6 @@
 </body>
 
 </html>
-
 
 
 

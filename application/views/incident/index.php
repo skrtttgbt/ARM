@@ -314,7 +314,7 @@
 											<tr>
 												<th>Patient Name</th>
 												<th>Animal Type</th>
-												<th>Bite Date</th>
+												<th>Incident Date</th>
 												<th>Status</th>
 												<th>Action</th>
 											</tr>

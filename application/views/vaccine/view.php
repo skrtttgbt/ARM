@@ -314,9 +314,10 @@
                                         <div class="form-group col-md-12">
                                             <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Type</label>
                                             <select class="form-select" name="type" id="">
-                                                <option value="Cat and Dog" <?php echo ($vaccine['type'] == "Cat and Dog" ? "selected" : ""); ?>>Cat and Dog</option>
                                                 <option value="Dog" <?php echo ($vaccine['type'] == "Dog" ? "selected" : ""); ?>>Dog</option>
                                                 <option value="Cat" <?php echo ($vaccine['type'] == "Cat" ? "selected" : ""); ?>>Cat</option>
+                                                <option value="Snake" <?php echo ($vaccine['type'] == "Snake" ? "selected" : ""); ?>>Snake</option>
+                                                <option value="Rat" <?php echo ($vaccine['type'] == "Rat" ? "selected" : ""); ?>>Rat</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
@@ -457,7 +458,6 @@
 </body>
 
 </html>
-
 
 
 

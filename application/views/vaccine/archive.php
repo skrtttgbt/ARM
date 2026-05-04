@@ -434,7 +434,7 @@ $CI->load->library('session');
                                                         <td><?php echo htmlspecialchars($batch['vaccine_name']); ?></td>
                                                         <td><?php echo htmlspecialchars($batch['vaccine_barcode']); ?></td>
                                                         <td><?php echo (int) $batch['quantity_remaining']; ?></td>
-                                                        <td><?php echo date('M j, Y', strtotime($batch['manufacture_date'])); ?></td>
+                                                        <td><?php echo !empty($batch['manufacture_date']) ? date('M j, Y', strtotime($batch['manufacture_date'])) : '<span class="text-muted">Not set</span>'; ?></td>
                                                         <td><?php echo date('M j, Y', strtotime($batch['expiration_date'])); ?></td>
                                                         <td><span class="badge bg-<?php echo $batch_class; ?>"><?php echo $batch_status; ?></span></td>
                                                     </tr>
@@ -501,7 +501,3 @@ $CI->load->library('session');
 </body>
 
 </html>
-
-
-
-

@@ -340,9 +340,10 @@ $CI->load->library('session');
                                 <div class="form-group col-md-12 mt-2">
                                     <label for="vaccineType" class="col-form-label">Vaccine Type</label>
                                     <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type" id="vaccineType">
-                                        <option value="Cat and Dog" <?php echo set_select('type', 'Cat and Dog', TRUE); ?>>Cat and Dog</option>
-                                        <option value="Dog" <?php echo set_select('type', 'Dog'); ?>>Dog</option>
+                                        <option value="Dog" <?php echo set_select('type', 'Dog', TRUE); ?>>Dog</option>
                                         <option value="Cat" <?php echo set_select('type', 'Cat'); ?>>Cat</option>
+                                        <option value="Snake" <?php echo set_select('type', 'Snake'); ?>>Snake</option>
+                                        <option value="Rat" <?php echo set_select('type', 'Rat'); ?>>Rat</option>
                                     </select>
                                     <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>
                                 </div>
@@ -429,7 +430,7 @@ $CI->load->library('session');
                                                 ?>
                                                 <tr>
                                                     <?php
-                                                    $nearest_expiration = !empty($vaccine['nearest_expiration_date']) ? $vaccine['nearest_expiration_date'] : '';
+                                               $nearest_expiration = !empty($vaccine['expiration_date']) ? $vaccine['expiration_date'] : (!empty($vaccine['nearest_expiration_date']) ? $vaccine['nearest_expiration_date'] : '');
                                                     $days_to_expiry = $nearest_expiration !== '' ? (int) floor((strtotime($nearest_expiration) - strtotime(date('Y-m-d'))) / 86400) : null;
                                                     $patients_per_box = 9;
                                                     $current_patient_progress = ((int) $vaccine['used_count']) % $patients_per_box;
@@ -583,6 +584,5 @@ $CI->load->library('session');
 </body>
 
 </html>
-
 
 
