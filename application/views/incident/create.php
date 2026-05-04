@@ -373,14 +373,21 @@
 
                                     <div class="row">
                                         <div class="form-group mt-2">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Animal Type</label>
-                                            <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type">
-                                                <option value="Dog">Dog</option>
-                                                <option value="Cat">Cat</option>
-                                                <option value="Snake">Snake</option>
-                                                <option value="Rat">Rat</option>
+                                            <label for="animalInvolved" class="col-form-label">Animal Involved</label>
+                                            <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type" id="animalInvolved">
+                                                <option value="Dog" <?php echo set_select('type', 'Dog', TRUE); ?>>Dog</option>
+                                                <option value="Cat" <?php echo set_select('type', 'Cat'); ?>>Cat</option>
+                                                <option value="Other" <?php echo set_select('type', 'Other'); ?>>Other Specify</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="otherAnimalRow" style="display: none;">
+                                        <div class="form-group mt-2">
+                                            <label for="otherAnimalInvolved" class="col-form-label">Other Specify</label>
+                                            <input name="type_other" type="text" value="<?php echo set_value('type_other'); ?>" class="form-control <?php echo (form_error('type_other') ? "is-invalid" : ""); ?>" id="otherAnimalInvolved">
+                                            <?php echo form_error('type_other', '<div class="invalid-feedback">', '</div>'); ?>  
                                         </div>
                                     </div>
 
@@ -468,11 +475,22 @@
     <script>
         $(function () {
             $('[data-plugin="knob"]').knob();
+
+            function toggleOtherAnimal() {
+                var showOther = $('#animalInvolved').val() === 'Other';
+                $('#otherAnimalRow').toggle(showOther);
+                $('#otherAnimalInvolved').prop('required', showOther);
+                if (!showOther) {
+                    $('#otherAnimalInvolved').val('');
+                }
+            }
+
+            $('#animalInvolved').on('change', toggleOtherAnimal);
+            toggleOtherAnimal();
         });
     </script>
 </body>
 
 </html>
-
 
 

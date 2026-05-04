@@ -350,14 +350,21 @@ $CI->load->library('session');
 
                                     <div class="row">
                                         <div class="form-group col-md-12">
-                                            <label for="vaccineType" class="col-form-label">Vaccine Type</label>
+                                            <label for="vaccineType" class="col-form-label">Animal Involved</label>
                                             <select class="form-select <?php echo (form_error('type') ? "is-invalid" : ""); ?>" name="type" id="vaccineType">
                                                 <option value="Dog" <?php echo set_select('type', 'Dog', TRUE); ?>>Dog</option>
                                                 <option value="Cat" <?php echo set_select('type', 'Cat'); ?>>Cat</option>
-                                                <option value="Snake" <?php echo set_select('type', 'Snake'); ?>>Snake</option>
-                                                <option value="Rat" <?php echo set_select('type', 'Rat'); ?>>Rat</option>
+                                                <option value="Other" <?php echo set_select('type', 'Other'); ?>>Other Specify</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback d-block">', '</div>'); ?>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="otherVaccineAnimalRow" style="display: none;">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label for="otherVaccineAnimal" class="col-form-label">Other Specify</label>
+                                            <input name="type_other" type="text" value="<?php echo set_value('type_other'); ?>" class="form-control <?php echo (form_error('type_other') ? "is-invalid" : ""); ?>" id="otherVaccineAnimal">
+                                            <?php echo form_error('type_other', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 
@@ -473,9 +480,23 @@ $CI->load->library('session');
     <!--Custom JavaScript -->
     <script src="<?php echo base_url(); ?>assets/dist/js/custom.min.js"></script>
     <script src="<?php echo base_url(); ?>assets/extra-libs/knob/jquery.knob.min.js"></script>
+    <script>
+        $(function () {
+            function toggleOtherVaccineAnimal() {
+                var showOther = $('#vaccineType').val() === 'Other';
+                $('#otherVaccineAnimalRow').toggle(showOther);
+                $('#otherVaccineAnimal').prop('required', showOther);
+                if (!showOther) {
+                    $('#otherVaccineAnimal').val('');
+                }
+            }
+
+            $('#vaccineType').on('change', toggleOtherVaccineAnimal);
+            toggleOtherVaccineAnimal();
+        });
+    </script>
 </body>
 
 </html>
-
 
 

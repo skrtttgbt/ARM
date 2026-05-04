@@ -45,12 +45,16 @@ class Incidents extends CI_Model {
         $patient_id = (int) $this->input->post('patient_id');
         $patient = $this->db->where('id', $patient_id)->get('patients')->row_array();
         $schedule_date = $this->input->post('bite_date');
+        $animal_type = $this->input->post('type');
+        if ($animal_type === 'Other') {
+            $animal_type = $this->input->post('type_other');
+        }
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
         'patient_id' => $patient_id,
         'dose' => $this->input->post('amount'),
-        'animal_type' => $this->input->post('type'),
+        'animal_type' => $animal_type,
         'bite_date' => $schedule_date,
         'bite_site' => $this->input->post('bite_place'),
         'status' => 0,

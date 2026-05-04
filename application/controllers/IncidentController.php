@@ -88,7 +88,10 @@ class IncidentController extends CI_Controller {
         // Get previous incidents for this patient
         $data['previous_incidents'] = $this->incidents->getIncidentsByPatientId($id);
 
-        $this->form_validation->set_rules('type', 'Animal Type', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('type', 'Animal Involved', 'trim|required|min_length[2]');
+        if ($this->input->post('type') === 'Other') {
+            $this->form_validation->set_rules('type_other', 'Other Animal Involved', 'trim|required|min_length[2]');
+        }
         $this->form_validation->set_rules('bite_date', 'Incident Date', 'trim|required');
         $this->form_validation->set_rules('bite_place', 'Bite Place', 'trim|required');
         $this->form_validation->set_rules('amount', 'Dose Amount', 'trim|required');

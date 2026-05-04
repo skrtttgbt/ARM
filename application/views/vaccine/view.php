@@ -312,14 +312,22 @@
 
                                     <div class="row">
                                         <div class="form-group col-md-12">
-                                            <label for="inputHorizontalSuccess" class="col-form-label">Vaccine Type</label>
-                                            <select class="form-select" name="type" id="">
-                                                <option value="Dog" <?php echo ($vaccine['type'] == "Dog" ? "selected" : ""); ?>>Dog</option>
-                                                <option value="Cat" <?php echo ($vaccine['type'] == "Cat" ? "selected" : ""); ?>>Cat</option>
-                                                <option value="Snake" <?php echo ($vaccine['type'] == "Snake" ? "selected" : ""); ?>>Snake</option>
-                                                <option value="Rat" <?php echo ($vaccine['type'] == "Rat" ? "selected" : ""); ?>>Rat</option>
+                                            <?php $is_other_animal = !in_array($vaccine['type'], array('Dog', 'Cat'), true); ?>
+                                            <label for="vaccineType" class="col-form-label">Animal Involved</label>
+                                            <select class="form-select" name="type" id="vaccineType">
+                                                <option value="Dog" <?php echo (!$is_other_animal && $vaccine['type'] == "Dog" ? "selected" : ""); ?>>Dog</option>
+                                                <option value="Cat" <?php echo (!$is_other_animal && $vaccine['type'] == "Cat" ? "selected" : ""); ?>>Cat</option>
+                                                <option value="Other" <?php echo ($is_other_animal ? "selected" : ""); ?>>Other Specify</option>
                                             </select>
                                             <?php echo form_error('type', '<div class="invalid-feedback">', '</div>'); ?>  
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="otherVaccineAnimalRow" style="display: none;">
+                                        <div class="form-group col-md-12 mt-2">
+                                            <label for="otherVaccineAnimal" class="col-form-label">Other Specify</label>
+                                            <input name="type_other" type="text" value="<?php echo set_value('type_other', $is_other_animal ? $vaccine['type'] : ''); ?>" class="form-control <?php echo (form_error('type_other') ? "is-invalid" : ""); ?>" id="otherVaccineAnimal">
+                                            <?php echo form_error('type_other', '<div class="invalid-feedback">', '</div>'); ?>
                                         </div>
                                     </div>
 
@@ -453,11 +461,21 @@
     <script>
         $(function () {
             $('[data-plugin="knob"]').knob();
+
+            function toggleOtherVaccineAnimal() {
+                var showOther = $('#vaccineType').val() === 'Other';
+                $('#otherVaccineAnimalRow').toggle(showOther);
+                $('#otherVaccineAnimal').prop('required', showOther);
+                if (!showOther) {
+                    $('#otherVaccineAnimal').val('');
+                }
+            }
+
+            $('#vaccineType').on('change', toggleOtherVaccineAnimal);
+            toggleOtherVaccineAnimal();
         });
     </script>
 </body>
 
 </html>
-
-
 

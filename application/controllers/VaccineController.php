@@ -89,7 +89,10 @@ class VaccineController extends CI_Controller {
         $data['audit_trail_entries'] = $this->vaccines->getAuditTrailEntries();
 
         $this->form_validation->set_rules('barcode', 'Barcode', 'trim|required');
-        $this->form_validation->set_rules('type', 'Vaccine Type', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('type', 'Animal Involved', 'trim|required|min_length[2]');
+        if ($this->input->post('type') === 'Other') {
+            $this->form_validation->set_rules('type_other', 'Other Animal Involved', 'trim|required|min_length[2]');
+        }
         $this->form_validation->set_rules('name', 'Vaccine Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('manufacture_date', 'Manufacture Date', 'trim|required');
         $this->form_validation->set_rules('expiration_date', 'Expiration Date', 'trim|required');
@@ -153,7 +156,10 @@ class VaccineController extends CI_Controller {
         $data['user_info'] = $this->users->getUser($session_id);
         $data['vaccine'] = $this->vaccines->getVaccine($id);
 
-        $this->form_validation->set_rules('type', 'Vaccine Type', 'trim|required|min_length[2]');
+        $this->form_validation->set_rules('type', 'Animal Involved', 'trim|required|min_length[2]');
+        if ($this->input->post('type') === 'Other') {
+            $this->form_validation->set_rules('type_other', 'Other Animal Involved', 'trim|required|min_length[2]');
+        }
         $this->form_validation->set_rules('name', 'Vaccine Name', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('description', 'Vaccine Description', 'trim|required|min_length[2]');
         $this->form_validation->set_rules('capacity', 'Vaccine Capacity', 'trim|required');

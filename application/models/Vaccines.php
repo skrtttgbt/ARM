@@ -181,11 +181,15 @@ class Vaccines extends CI_Model {
         $date = date("F j, Y");
         $has_manufacture_date = $this->db->field_exists('manufacture_date', 'vaccines');
         $has_expiration_date = $this->db->field_exists('expiration_date', 'vaccines');
+        $animal_type = $this->input->post('type');
+        if ($animal_type === 'Other') {
+            $animal_type = $this->input->post('type_other');
+        }
 
         $data = array(
         'user_id' => $this->input->post('user_id'),
         'status' => 0,
-        'type' => $this->input->post('type'),
+        'type' => $animal_type,
         'barcode' => $this->input->post('barcode'),
         'name' => $this->input->post('name'),
         'description' => '',
@@ -236,7 +240,12 @@ class Vaccines extends CI_Model {
 
     public function updateVaccine($id) {
 
-        $this->db->set("type", $this->input->post('type'));
+        $animal_type = $this->input->post('type');
+        if ($animal_type === 'Other') {
+            $animal_type = $this->input->post('type_other');
+        }
+
+        $this->db->set("type", $animal_type);
         $this->db->set("name", $this->input->post('name'));
         $this->db->set("description", $this->input->post('description'));
         $this->db->set("capacity", $this->input->post('capacity'), false);
